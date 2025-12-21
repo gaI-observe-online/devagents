@@ -24,6 +24,7 @@ from .paths import get_paths
 from .validator import format_text_report, validate
 
 from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
+from opentelemetry import metrics, trace
 
 
 app = FastAPI(title="GADOS Control Plane (CA GUI)", version="0.1.0")
@@ -37,6 +38,15 @@ if static_dir.exists():
 
 setup_observability(service_name="gados-control-plane")
 instrument_fastapi(app)
+
+_log = __import__("logging").getLogger(__name__)
+_tracer = trace.get_tracer("gados-control-plane")
+_meter = metrics.get_meter("gados-control-plane")
+_debug_counter = _meter.create_counter(
+    name="gados_debug_trace_total",
+    description="Count of /debug/trace calls",
+    unit="1",
+)
 
 
 def _utc_now() -> str:
@@ -115,6 +125,20 @@ def dashboard(request: Request) -> HTMLResponse:
             "by_status": dict(sorted(by_status.items(), key=lambda kv: (-kv[1], kv[0]))),
         },
     )
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/debug/trace")
+def debug_trace() -> dict[str, bool]:
+    with _tracer.start_as_current_span("debug.trace") as span:
+        span.set_attribute("debug", True)
+        _debug_counter.add(1)
+        _log.info("debug_trace_called")
+    return {"ok": True}
 
 
 @app.get("/artifacts", response_class=HTMLResponse)

@@ -11,3 +11,4 @@ python-json-logger
 # Dev/test
 pytest
 ruff
+httpx
