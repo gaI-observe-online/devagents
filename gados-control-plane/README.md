@@ -26,6 +26,14 @@ uvicorn gados_control_plane.main:app --reload --port 8000
 
 Open: `http://localhost:8000`
 
+## Autonomous mode (optional)
+Enable automatic report generation (every 6 hours by default):
+
+```bash
+export GADOS_AUTORUN_REPORTS=1
+export GADOS_AUTORUN_REPORTS_INTERVAL_MINUTES=360
+```
+
 ## Governance note
 This GUI does **not** “auto-verify” anything. It only helps produce and validate artifacts.
 Only the **Delivery Governor (VDA)** may certify `VERIFIED` in the story log, and only with evidence + peer review present.

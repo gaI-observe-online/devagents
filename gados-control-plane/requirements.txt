@@ -3,3 +3,5 @@ uvicorn[standard]
 jinja2
 python-multipart
 PyYAML
+langgraph
+langchain-core

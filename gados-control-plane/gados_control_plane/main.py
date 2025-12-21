@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -8,6 +10,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from .agents_langgraph import run_daily_digest
 from .artifacts import (
     append_text,
     list_artifacts,
@@ -31,6 +34,33 @@ if static_dir.exists():
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+async def _autorun_reports_loop() -> None:
+    """
+    Optional autonomous report generation loop.
+
+    Controlled via env vars:
+    - GADOS_AUTORUN_REPORTS=1 to enable
+    - GADOS_AUTORUN_REPORTS_INTERVAL_MINUTES=360 (default 6 hours)
+    """
+    enabled = os.getenv("GADOS_AUTORUN_REPORTS", "0").strip() == "1"
+    if not enabled:
+        return
+    interval_min = int(os.getenv("GADOS_AUTORUN_REPORTS_INTERVAL_MINUTES", "360"))
+    interval_sec = max(60, interval_min * 60)
+    while True:
+        try:
+            run_daily_digest()
+        except Exception:
+            # Best-effort: loop should never crash the server.
+            pass
+        await asyncio.sleep(interval_sec)
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    asyncio.create_task(_autorun_reports_loop())
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -161,13 +191,14 @@ def append_story_log(
 ) -> RedirectResponse:
     paths = get_paths()
     log_rel = f"log/{story_id}.log.yaml"
+    notes_safe = notes.replace('"', "'")
     entry = (
         "\n"
         "  - at: \"" + _utc_now() + "\"\n"
         "    actor_role: \"" + actor_role + "\"\n"
         "    actor: \"" + actor + "\"\n"
         "    type: \"" + event_type + "\"\n"
-        "    notes: \"" + notes.replace('\"', \"'\") + "\"\n"
+        "    notes: \"" + notes_safe + "\"\n"
     )
     append_text(paths, log_rel, entry)
     return RedirectResponse(url=f"/view?path={log_rel}", status_code=303)
@@ -185,4 +216,29 @@ def validate_txt() -> PlainTextResponse:
     paths = get_paths()
     msgs = validate(paths)
     return PlainTextResponse(format_text_report(msgs))
+
+
+@app.get("/reports", response_class=HTMLResponse)
+def reports(request: Request) -> HTMLResponse:
+    paths = get_paths()
+    reports_dir = paths.gados_root / "log" / "reports"
+    reports_list: list[dict] = []
+    if reports_dir.exists():
+        for p in sorted(reports_dir.iterdir(), reverse=True):
+            if not (p.is_file() and p.suffix == ".md" and p.name.startswith("REPORT-")):
+                continue
+            reports_list.append(
+                {
+                    "name": p.name,
+                    "rel": str(p.relative_to(paths.gados_root)),
+                }
+            )
+    return templates.TemplateResponse("reports.html", {"request": request, "reports": reports_list})
+
+
+@app.post("/agents/run/daily-digest")
+def run_agents_daily_digest() -> RedirectResponse:
+    out = run_daily_digest()
+    rel = out.get("report_rel_path", "log/reports")
+    return RedirectResponse(url=f"/view?path={rel}", status_code=303)
 
