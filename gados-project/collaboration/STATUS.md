@@ -9,6 +9,11 @@ Last updated (UTC): 2025-12-21
 - **Economics loop**: economics ledger spec + economics module + tests present; runtime ledger writer + trigger-to-escalation wiring pending
 - **QA / evidence**: QA agent assigned; evidence package to be produced at `gados-project/verification/BETA-QA-evidence.md`
 
+## Critical path (VPN beta)
+1. **Enforce workflow gates in code** (implement `WORKFLOW_GATES.md` in validator: parse story logs for `VERIFICATION_DECISION`, require VDA-approved change plan for `IMPLEMENTED+`, enforce VDA-only VERIFIED).
+2. **Wire economics triggers to actions** (append to `log/economics/ledger.jsonl` in runtime + on threshold breach create escalation artifact + send notification/bus message).
+3. **Complete QA evidence** (fill `verification/BETA-QA-evidence.md`; Docker/Tempo proof optional but preferred).
+
 ## Blockers
 - Docker-based LGTM validation requires a machine with Docker. Mitigation: integration tests are now optional by default; CI runs docker smoke as a non-blocking job.
 
