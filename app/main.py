@@ -31,6 +31,11 @@ async def request_id_middleware(request: Request, call_next):
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
+@app.get("/health")
+def health() -> dict[str, str]:
+    # Alias to satisfy integration smoke checks expecting /health.
+    return {"status": "ok"}
+
 
 @app.get("/")
 def root() -> dict[str, str]:

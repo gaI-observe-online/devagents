@@ -31,3 +31,12 @@ Links (PR/commit/docs):
   - `gados-project/memory/NOTIFICATION_POLICY.md`
   - `gados-project/memory/VERIFICATION_POLICY.md`
 
+#### 2025-12-21 — Move Docker/integration regression to CI
+
+- **Decision**: Run Docker/integration smoke checks in CI (GitHub Actions) since some environments (e.g., this agent runner) do not have Docker.
+- **Context**: Local QA remains blocked without Docker; we still need auditable integration evidence.
+- **Chosen option + rationale**: Add an `integration` CI job that starts `docker compose`, starts the service, and runs smoke curls against Grafana and `/health`.
+- **Owner**: QA agent
+- **Links**:
+  - `.github/workflows/blank.yml` (`integration` job)
+

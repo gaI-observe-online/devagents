@@ -18,7 +18,8 @@ Last updated: 2025-12-21
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
-  - **BLOCKED**: Docker integration steps (Docker not installed in this environment)
+  - **BLOCKED (local)**: Docker integration steps (Docker not installed in this environment)
+  - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
 
 ### Known blockers / gaps
 
