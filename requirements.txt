@@ -1,0 +1,13 @@
+-r gados-control-plane/requirements.txt
+
+# Observability (free local stack via docker-compose.yml)
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-logging
+python-json-logger
+
+# Dev/test
+pytest
+ruff
