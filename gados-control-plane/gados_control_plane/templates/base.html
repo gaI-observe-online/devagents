@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title if title else "GADOS Control Plane" }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+      code, pre { font-size: 0.9rem; }
+      .muted { color: var(--pico-muted-color); }
+      .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--pico-card-background-color); border: 1px solid var(--pico-muted-border-color); }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <nav>
+        <ul>
+          <li><strong>GADOS</strong> <span class="muted">Control Plane</span></li>
+        </ul>
+        <ul>
+          <li><a href="/">Dashboard</a></li>
+          <li><a href="/artifacts">Artifacts</a></li>
+          <li><a href="/create">Create</a></li>
+          <li><a href="/reports">Reports</a></li>
+          <li><a href="/inbox">Inbox</a></li>
+          <li><a href="/decisions">Decisions</a></li>
+          <li><a href="/validate">Validate</a></li>
+        </ul>
+      </nav>
+
+      {% block content %}{% endblock %}
+
+      <hr />
+      <p class="muted">
+        Governance: only VDA can certify <code>VERIFIED</code>, and only with evidence + peer review artifacts present.
+      </p>
+    </main>
+  </body>
+</html>
+

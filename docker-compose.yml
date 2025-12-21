@@ -1,0 +1,17 @@
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.9.2
+    container_name: otel-lgtm
+    ports:
+      - "3000:3000" # Grafana
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - lgtm-data:/data
+
+volumes:
+  lgtm-data:
+

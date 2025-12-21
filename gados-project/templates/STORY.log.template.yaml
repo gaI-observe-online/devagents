@@ -1,0 +1,42 @@
+schema: gados.story_log.v1
+story_id: "STORY-###"
+epic_id: "EPIC-###"
+title: "<Story Title>"
+
+events:
+  - at: "<ISO-8601 UTC timestamp>"
+    actor_role: "CoordinationAgent"
+    actor: "<name>"
+    type: "STATUS_CHANGED"
+    from: "PLANNED"
+    to: "IN_PROGRESS"
+    artifact_refs:
+      - "plan/stories/STORY-###.md"
+    notes: ""
+
+  - at: "<ISO-8601 UTC timestamp>"
+    actor_role: "QAAgent"
+    actor: "<name>"
+    type: "EVIDENCE_ATTACHED"
+    artifact_refs:
+      - "verification/STORY-###-evidence.md"
+    notes: "Evidence package prepared."
+
+  - at: "<ISO-8601 UTC timestamp>"
+    actor_role: "PeerReviewer"
+    actor: "<name>"
+    type: "PEER_REVIEW_ATTACHED"
+    artifact_refs:
+      - "verification/STORY-###-review.md"
+    notes: "Peer review prepared."
+
+  - at: "<ISO-8601 UTC timestamp>"
+    actor_role: "DeliveryGovernor"
+    actor: "<name>"
+    type: "VERIFICATION_DECISION"
+    decision: "VERIFIED" # VERIFIED | REJECTED | ESCALATED
+    artifact_refs:
+      - "verification/STORY-###-evidence.md"
+      - "verification/STORY-###-review.md"
+    notes: "Decision rationale and criteria mapping."
+
