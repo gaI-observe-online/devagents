@@ -6,16 +6,14 @@
     <meta name="description" content="GADOS - Governed AI Delivery Operating System. A revolutionary framework for AI-driven development with governance.">
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self';
-                   script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
-                   style-src 'self' 'unsafe-inline';">
+                   script-src 'none';
+                   style-src 'self' 'unsafe-inline';
+                   img-src 'self' data:;
+                   base-uri 'none';
+                   frame-ancestors 'none';">
     <title>GADOS Strategic Game Plan - The AI Governance Revolution</title>
 
-    <!-- Preconnect to CDN for faster loading -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-
-    <!-- Mermaid (CDN). If you pin a specific version, consider adding SRI. -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- NOTE: This page is intentionally self-contained (no external JS/CDNs). -->
 
     <style>
         /* ===== CSS CUSTOM PROPERTIES ===== */
@@ -697,31 +695,7 @@
         </footer>
     </div>
 
-    <script>
-        // Mermaid initialization with error handling
-        try {
-            if (typeof mermaid !== 'undefined') {
-                mermaid.initialize({
-                    startOnLoad: true,
-                    theme: 'default',
-                    securityLevel: 'strict',
-                    themeVariables: {
-                        primaryColor: '#667eea',
-                        primaryTextColor: '#fff',
-                        primaryBorderColor: '#764ba2',
-                        lineColor: '#34495e',
-                        secondaryColor: '#3498db',
-                        tertiaryColor: '#f39c12'
-                    }
-                });
-                console.log('Mermaid initialized successfully');
-            } else {
-                console.warn('Mermaid library failed to load from CDN');
-            }
-        } catch (error) {
-            console.error('Mermaid initialization failed:', error);
-        }
-    </script>
+    <!-- No scripts: keep this artifact portable and audit-friendly. -->
 </body>
 </html>
 
