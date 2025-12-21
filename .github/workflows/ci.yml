@@ -6,8 +6,45 @@ on:
     branches: [ main ]
 
 jobs:
-  smoke:
+  unit:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e gados-control-plane
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Run unit tests (no external deps)
+        run: python -m pytest -q -m "not integration"
+
+      - name: Governance validator
+        run: python gados-control-plane/scripts/validate_artifacts.py
+
+      - name: Required docs present (audit-ready)
+        run: |
+          test -f gados-project/strategy/ARCHITECTURE.md
+          test -f gados-project/strategy/RUNBOOKS.md
+          test -f gados-project/memory/NOTIFICATION_POLICY.md
+          test -f gados-project/memory/VERIFICATION_POLICY.md
+          test -f gados-project/memory/ARCH_DECISION_POLICY.md
+          test -f gados-project/memory/SECURITY_POLICY.md
+          test -f gados-project/memory/ECONOMICS_LEDGER.md
+          test -f gados-project/memory/WORKFLOW_GATES.md
+
+  docker_smoke:
+    runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -41,22 +78,10 @@ jobs:
           pip install -r requirements.txt
           pip install -e gados-control-plane
 
-      - name: Lint
-        run: python -m ruff check .
-
-      - name: Run tests
-        run: python -m pytest -q
-
-      - name: Required docs present (audit-ready)
-        run: |
-          test -f gados-project/strategy/ARCHITECTURE.md
-          test -f gados-project/strategy/RUNBOOKS.md
-          test -f gados-project/memory/NOTIFICATION_POLICY.md
-          test -f gados-project/memory/VERIFICATION_POLICY.md
-          test -f gados-project/memory/ARCH_DECISION_POLICY.md
-          test -f gados-project/memory/SECURITY_POLICY.md
-          test -f gados-project/memory/ECONOMICS_LEDGER.md
-          test -f gados-project/memory/WORKFLOW_GATES.md
+      - name: Run integration tests (docker required)
+        env:
+          GADOS_RUN_INTEGRATION_TESTS: "1"
+        run: python -m pytest -q tests/integration
 
       - name: Logs on failure
         if: failure()

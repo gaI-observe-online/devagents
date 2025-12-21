@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+import os
 import time
 
 import httpx
+import pytest
 
 
 BASE = "http://localhost:8000"
 
+pytestmark = pytest.mark.integration
+
 
 def _wait_for(url: str, timeout_s: int = 60) -> None:
+    if os.getenv("GADOS_RUN_INTEGRATION_TESTS", "0").strip() != "1":
+        pytest.skip("Integration tests disabled (set GADOS_RUN_INTEGRATION_TESTS=1).")
     deadline = time.time() + timeout_s
     last_exc: Exception | None = None
     while time.time() < deadline:
