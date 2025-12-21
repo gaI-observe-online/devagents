@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,6 +23,8 @@ from .artifacts import (
 from .paths import get_paths
 from .validator import format_text_report, validate
 
+from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
+
 
 app = FastAPI(title="GADOS Control Plane (CA GUI)", version="0.1.0")
 
@@ -31,6 +34,9 @@ templates = Jinja2Templates(directory=str(PKG_DIR / "templates"))
 static_dir = PKG_DIR / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+setup_observability(service_name="gados-control-plane")
+instrument_fastapi(app)
 
 
 def _utc_now() -> str:
@@ -62,6 +68,18 @@ async def _autorun_reports_loop() -> None:
 @app.on_event("startup")
 async def _startup() -> None:
     asyncio.create_task(_autorun_reports_loop())
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    rid = request.headers.get("x-request-id") or str(uuid.uuid4())
+    token = request_id_ctx.set(rid)
+    try:
+        response = await call_next(request)
+        response.headers["x-request-id"] = rid
+        return response
+    finally:
+        request_id_ctx.reset(token)
 
 
 @app.get("/", response_class=HTMLResponse)
