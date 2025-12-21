@@ -47,6 +47,13 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
+      - name: Required docs present (audit-ready)
+        run: |
+          test -f gados-project/strategy/ARCHITECTURE.md
+          test -f gados-project/strategy/RUNBOOKS.md
+          test -f gados-project/memory/NOTIFICATION_POLICY.md
+          test -f gados-project/memory/VERIFICATION_POLICY.md
+
       - name: Logs on failure
         if: failure()
         run: docker compose -f compose.test.yml logs --no-color
