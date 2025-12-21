@@ -36,3 +36,7 @@ Open: `http://localhost:8000`
 In the UI, open **Reports** and run the “daily digest” agent graph.
 It writes an audit-friendly report artifact to `gados-project/log/reports/`.
 
+## Strategic game plan (HTML)
+Open this file in a browser:
+- `gados-project/strategy/GADOS-STRATEGIC-GAME-PLAN.html`
+

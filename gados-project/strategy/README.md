@@ -10,3 +10,7 @@ This folder contains **strategic epic plans** (`EPIC-###.md`).
 ## Start here
 Use `/gados-project/templates/EPIC.template.md`.
 
+## Strategic game plan (HTML)
+For a shareable, polished single-page view, see:
+- `GADOS-STRATEGIC-GAME-PLAN.html`
+
