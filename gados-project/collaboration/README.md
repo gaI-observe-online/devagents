@@ -12,4 +12,5 @@ This folder is the **shared coordination hub** for all contributors (humans + ag
 - `STATUS.md`: shared status board (workstreams, blockers, QA snapshot)
 - `HANDOFF.md`: append-only handoff log (use the template inside)
 - `DECISIONS.md`: append-only decision log (audit-friendly)
+- `GUIDELINES.md`: collaboration rules + evidence standards + observability expectations
 
