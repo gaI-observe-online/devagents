@@ -224,6 +224,38 @@ def create_change(change_id: str = Form(...), story_id: str = Form(...), epic_id
     return RedirectResponse(url=f"/view?path={rel}", status_code=303)
 
 
+@app.get("/decisions", response_class=HTMLResponse)
+def decisions(request: Request) -> HTMLResponse:
+    paths = get_paths()
+    decision_dir = paths.gados_root / "decision"
+    items: list[str] = []
+    if decision_dir.exists():
+        for p in sorted(decision_dir.iterdir(), reverse=True):
+            if not p.is_file():
+                continue
+            if p.name == "README.md":
+                continue
+            items.append(str(p.relative_to(paths.gados_root)))
+    return templates.TemplateResponse("decisions.html", {"request": request, "items": items})
+
+
+@app.post("/create/adr")
+def create_adr(adr_id: str = Form(...), title: str = Form(...), human: str = Form(...), requested_by: str = Form(...)) -> RedirectResponse:
+    paths = get_paths()
+    tpl = read_text(paths, "templates/ADR.template.md")
+    today = datetime.now(timezone.utc).date().isoformat()
+    content = (
+        tpl.replace("ADR-###", adr_id)
+        .replace("<Decision Title>", title)
+        .replace("<name>", human)
+        .replace("<role/agent>", requested_by)
+        .replace("<YYYY-MM-DD>", today)
+    )
+    rel = f"decision/{adr_id}.md"
+    write_text(paths, rel, content)
+    return RedirectResponse(url=f"/view?path={rel}", status_code=303)
+
+
 @app.post("/append/story-log")
 def append_story_log(
     story_id: str = Form(...),

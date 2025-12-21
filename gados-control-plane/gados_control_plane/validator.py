@@ -28,6 +28,7 @@ def validate(paths: ProjectPaths) -> list[ValidationMessage]:
         "memory/DESIGN_PRINCIPLES.md",
         "memory/ARCH_RULES.md",
         "memory/COMM_PROTOCOL.md",
+        "memory/ARCH_DECISION_POLICY.md",
         "memory/NOTIFICATION_POLICY.md",
         "memory/VERIFICATION_POLICY.md",
         "strategy/ARCHITECTURE.md",
@@ -35,6 +36,7 @@ def validate(paths: ProjectPaths) -> list[ValidationMessage]:
         "templates/EPIC.template.md",
         "templates/STORY.template.md",
         "templates/CHANGE.template.yaml",
+        "templates/ADR.template.md",
     ]
     for rel in required:
         p = paths.gados_root / rel
