@@ -32,6 +32,8 @@ jobs:
           test -f gados-project/memory/COMM_PROTOCOL.md
           test -f gados-project/memory/NOTIFICATION_POLICY.md
           test -f gados-project/memory/VERIFICATION_POLICY.md
+          test -f gados-project/memory/ECONOMICS_LEDGER.md
+          test -f gados-project/memory/WORKFLOW_GATES.md
 
       - name: Lint
         run: python -m ruff check .
