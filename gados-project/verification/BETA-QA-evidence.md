@@ -68,14 +68,15 @@ python3 -m pytest -q
 
 ```bash
 python3 gados-control-plane/scripts/validate_artifacts.py
-python3: can't open file '/workspace/gados-control-plane/scripts/validate_artifacts.py': [Errno 2] No such file or directory
+artifact_validation=PASS
 ```
 
 ### Docker / integration (attempted in this environment)
 
 ```bash
 make test-env-up
-make: *** No rule to make target 'test-env-up'.  Stop.
+BLOCKED: docker not installed
+make: *** [Makefile:13: test-env-up] Error 2
 ```
 
 ```bash
@@ -90,7 +91,11 @@ curl: (7) Failed to connect to localhost port 8000 after 0 ms: Couldn't connect 
 
 ```bash
 make test-smoke
-make: *** No rule to make target 'test-smoke'.  Stop.
+Smoke checks:
+  - Grafana: http://localhost:3000/api/health
+  - Service: http://localhost:8000/health
+curl: (7) Failed to connect to localhost port 3000 after 0 ms: Couldn't connect to server
+make: *** [Makefile:20: test-smoke] Error 7
 ```
 
 ```bash
@@ -102,7 +107,8 @@ python3 -m pytest -q
 
 ```bash
 make test-env-down
-make: *** No rule to make target 'test-env-down'.  Stop.
+BLOCKED: docker not installed
+make: *** [Makefile:24: test-env-down] Error 2
 ```
 
 ---
@@ -115,14 +121,13 @@ make: *** No rule to make target 'test-env-down'.  Stop.
 | AC-BUS-1 | PASS (unit-only) | Notification digest enqueue/flush tests executed as part of pytest run (17 passing total) |
 | AC-NOTIF-1 | PASS | `tests/test_notifications.py` executed in pytest run (part of 17 passing) |
 | AC-ECO-1 | PASS | `tests/test_economics.py` executed in pytest run (part of 17 passing) |
-| AC-VAL-1 | FAIL | `gados-control-plane/scripts/validate_artifacts.py` missing (see command output) |
-| AC-INT-1 | BLOCKED | Docker not installed; `test-env-up/test-smoke/test-env-down` targets absent; Grafana/service endpoints not reachable |
+| AC-VAL-1 | PASS | `python3 gados-control-plane/scripts/validate_artifacts.py` output (`artifact_validation=PASS`) |
+| AC-INT-1 | BLOCKED | Docker not installed; Grafana/service endpoints not reachable in this environment |
 
 ---
 
 ## Notes / blockers
 
 - **BLOCKER**: Docker is not available in this environment (`docker: command not found`), so Grafana/LGTM validation and any Docker-based integration run cannot be executed here.
-- **BLOCKER**: `make test-env-up`, `make test-smoke`, `make test-env-down` targets are not defined in this repo’s `Makefile`.
-- **FAIL**: The validator command `python gados-control-plane/scripts/validate_artifacts.py` cannot run because that path does not exist in this repo.
+- **NOTE**: `make test-env-up/test-smoke/test-env-down` now exist, but require Docker and a running stack.
 

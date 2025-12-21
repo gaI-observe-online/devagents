@@ -1,6 +1,4 @@
 import os
-import sys
-
 
 REQUIRED_FILES = [
     # Core docs artifacts

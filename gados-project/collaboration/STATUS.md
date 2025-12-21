@@ -17,11 +17,9 @@ Last updated: 2025-12-21
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
-  - **BLOCKED**: Docker integration steps (Docker not installed; test-env targets missing)
+  - **BLOCKED**: Docker integration steps (Docker not installed in this environment)
 
 ### Known blockers / gaps
 
-- **Docker not available** in this environment for Grafana/LGTM integration checks.
-- **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down`.
-- **Docker not available** in this environment for Grafana/LGTM integration checks.
+- **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down` and Grafana/Tempo checks.
 

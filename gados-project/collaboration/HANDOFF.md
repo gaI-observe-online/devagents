@@ -58,3 +58,17 @@ Next steps:
   - Map evidence to acceptance criteria with **PASS/FAIL/BLOCKED**
   - If BLOCKED, state the reason (e.g., “Docker not installed”) and what environment is required
 
+#### 2025-12-21 — QA regression plan control (plan + actual files)
+
+- **Workstream**: Regression plan hardening (reduce avoidable FAIL/BLOCKED)
+- **Plan**:
+  - Create missing validator command `python gados-control-plane/scripts/validate_artifacts.py`
+  - Add `make test-env-up/test-smoke/test-env-down` targets that produce clear BLOCKED output when Docker is missing
+  - Update QA evidence + regression log artifacts with verbatim outputs
+- **Actual files changed/added**:
+  - Added: `gados-control-plane/scripts/validate_artifacts.py`
+  - Updated: `Makefile` (added `test-env-up/test-smoke/test-env-down`)
+  - Updated: `gados-project/verification/BETA-QA-evidence.md`
+  - Added: `gados-project/log/reports/BETA-QA-regression-20251221.md`
+  - Updated: `gados-project/collaboration/STATUS.md`
+
