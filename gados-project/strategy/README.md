@@ -1,0 +1,12 @@
+# Strategy (Epics)
+
+This folder contains **strategic epic plans** (`EPIC-###.md`).
+
+## Rules
+- Epics must align with `/gados-project/memory/FOUNDATION.md`.
+- Epic plans should cite **usage/cost data** when making economic or architecture recommendations.
+- Epics are planning artifacts: they do **not** certify verification truth.
+
+## Start here
+Use `/gados-project/templates/EPIC.template.md`.
+
