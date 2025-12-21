@@ -72,3 +72,20 @@ Next steps:
   - Added: `gados-project/log/reports/BETA-QA-regression-20251221.md`
   - Updated: `gados-project/collaboration/STATUS.md`
 
+#### 2025-12-21 — Integration (blocked) code review notes for merge agent
+
+- **Context**: Local Docker integration checks are BLOCKED in this environment. A CI `integration` job exists to run the stack and smoke checks.
+- **Reviewed files**:
+  - `docker-compose.yml`
+  - `Makefile`
+  - `.github/workflows/blank.yml` (`integration` job)
+  - `app/main.py` (`/health` and `/healthz`)
+- **What looks good**:
+  - CI polls/waits before curl (reduced flake risk).
+  - `/health` endpoint exists and matches smoke expectations.
+  - Make targets emit clear BLOCKED when Docker is missing.
+- **Risks / suggestions (to reduce future regressions)**:
+  - Pin `grafana/otel-lgtm` to a specific tag (avoid `:latest` drift).
+  - Align default `setup_observability(service_name=...)` to `gados-control-plane` to match runbooks (env already overrides in CI).
+  - Consider adding a future CI assertion that a trace exists for `service.name="gados-control-plane"` (Tempo query) once feasible.
+
