@@ -13,14 +13,15 @@ Last updated: 2025-12-21
 
 - **Evidence artifact**: `gados-project/verification/BETA-QA-evidence.md`
 - **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
+- **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
-  - **FAIL**: `python3 gados-control-plane/scripts/validate_artifacts.py` (missing in repo)
+  - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
   - **BLOCKED**: Docker integration steps (Docker not installed; test-env targets missing)
 
 ### Known blockers / gaps
 
-- **Validator script missing**: `gados-control-plane/scripts/validate_artifacts.py` not present in this repo.
-- **Integration targets missing**: `make test-env-up`, `make test-smoke`, `make test-env-down` not defined.
+- **Docker not available** in this environment for Grafana/LGTM integration checks.
+- **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down`.
 - **Docker not available** in this environment for Grafana/LGTM integration checks.
 
