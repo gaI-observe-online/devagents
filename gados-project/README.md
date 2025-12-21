@@ -18,6 +18,14 @@ To keep merges and audits clean, the core GADOS docs are stored as **versioned a
 - `gados-project/memory/VERIFICATION_POLICY.md`
 - `gados-project/memory/ui-screenshots-checklist.md` (optional audit checklist)
 
+## Collaboration (shared place)
+
+For ongoing status updates, handoffs, and decisions, use:
+
+- `gados-project/collaboration/STATUS.md`
+- `gados-project/collaboration/HANDOFF.md`
+- `gados-project/collaboration/DECISIONS.md`
+
 ## Intent → VERIFIED lifecycle (one page)
 
 The lifecycle is enforced by the verification policy:
