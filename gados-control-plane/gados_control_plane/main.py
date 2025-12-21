@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -28,6 +30,7 @@ from opentelemetry import metrics, trace
 
 
 app = FastAPI(title="GADOS Control Plane (CA GUI)", version="0.1.0")
+basic_auth = HTTPBasic(auto_error=False)
 
 PKG_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PKG_DIR / "templates"))
@@ -51,6 +54,30 @@ _debug_counter = _meter.create_counter(
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+def _auth_enabled() -> bool:
+    return bool(os.getenv("GADOS_BASIC_AUTH_USER")) and bool(os.getenv("GADOS_BASIC_AUTH_PASSWORD"))
+
+
+def require_write_auth(credentials: HTTPBasicCredentials | None = Depends(basic_auth)) -> str:
+    """
+    MVP access control for write endpoints.
+
+    If auth env vars are set, require HTTP Basic auth and return the username.
+    If unset, allow (insecure local mode) and return "anonymous".
+    """
+    if not _auth_enabled():
+        return "anonymous"
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Authentication required", headers={"WWW-Authenticate": "Basic"})
+
+    expected_user = os.getenv("GADOS_BASIC_AUTH_USER", "")
+    expected_pass = os.getenv("GADOS_BASIC_AUTH_PASSWORD", "")
+    user_ok = secrets.compare_digest(credentials.username, expected_user)
+    pass_ok = secrets.compare_digest(credentials.password, expected_pass)
+    if not (user_ok and pass_ok):
+        raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
+    return credentials.username
 
 
 async def _autorun_reports_loop() -> None:
@@ -175,7 +202,12 @@ def create_forms(request: Request) -> HTMLResponse:
 
 
 @app.post("/create/epic")
-def create_epic(epic_id: str = Form(...), title: str = Form(...), owner: str = Form("Strategic Brain")) -> RedirectResponse:
+def create_epic(
+    epic_id: str = Form(...),
+    title: str = Form(...),
+    owner: str = Form("Strategic Brain"),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
     paths = get_paths()
     template_rel = "templates/EPIC.template.md"
     epic_rel = f"strategy/{epic_id}.md"
@@ -186,7 +218,12 @@ def create_epic(epic_id: str = Form(...), title: str = Form(...), owner: str = F
 
 
 @app.post("/create/story")
-def create_story(story_id: str = Form(...), title: str = Form(...), epic_id: str = Form(...)) -> RedirectResponse:
+def create_story(
+    story_id: str = Form(...),
+    title: str = Form(...),
+    epic_id: str = Form(...),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
     paths = get_paths()
     tpl = read_text(paths, "templates/STORY.template.md")
     story_rel = f"plan/stories/{story_id}.md"
@@ -210,7 +247,13 @@ def create_story(story_id: str = Form(...), title: str = Form(...), epic_id: str
 
 
 @app.post("/create/change")
-def create_change(change_id: str = Form(...), story_id: str = Form(...), epic_id: str = Form(...), title: str = Form(...)) -> RedirectResponse:
+def create_change(
+    change_id: str = Form(...),
+    story_id: str = Form(...),
+    epic_id: str = Form(...),
+    title: str = Form(...),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
     paths = get_paths()
     tpl = read_text(paths, "templates/CHANGE.template.yaml")
     rel = f"plan/changes/{change_id}.yaml"
@@ -240,7 +283,13 @@ def decisions(request: Request) -> HTMLResponse:
 
 
 @app.post("/create/adr")
-def create_adr(adr_id: str = Form(...), title: str = Form(...), human: str = Form(...), requested_by: str = Form(...)) -> RedirectResponse:
+def create_adr(
+    adr_id: str = Form(...),
+    title: str = Form(...),
+    human: str = Form(...),
+    requested_by: str = Form(...),
+    user: str = Depends(require_write_auth),
+) -> RedirectResponse:
     paths = get_paths()
     tpl = read_text(paths, "templates/ADR.template.md")
     today = datetime.now(timezone.utc).date().isoformat()
@@ -252,6 +301,8 @@ def create_adr(adr_id: str = Form(...), title: str = Form(...), human: str = For
         .replace("<YYYY-MM-DD>", today)
     )
     rel = f"decision/{adr_id}.md"
+    # Lightweight attribution for audit trail.
+    content = content + f"\n\n---\n**submitted_by**: {user}\n**submitted_at_utc**: {_utc_now()}\n"
     write_text(paths, rel, content)
     return RedirectResponse(url=f"/view?path={rel}", status_code=303)
 
@@ -263,6 +314,7 @@ def append_story_log(
     actor: str = Form(...),
     event_type: str = Form(...),
     notes: str = Form(""),
+    user: str = Depends(require_write_auth),
 ) -> RedirectResponse:
     paths = get_paths()
     log_rel = f"log/{story_id}.log.yaml"
@@ -274,6 +326,7 @@ def append_story_log(
         "    actor: \"" + actor + "\"\n"
         "    type: \"" + event_type + "\"\n"
         "    notes: \"" + notes_safe + "\"\n"
+        "    submitted_by: \"" + user.replace('"', "'") + "\"\n"
     )
     append_text(paths, log_rel, entry)
     return RedirectResponse(url=f"/view?path={log_rel}", status_code=303)
@@ -312,7 +365,7 @@ def reports(request: Request) -> HTMLResponse:
 
 
 @app.post("/agents/run/daily-digest")
-def run_agents_daily_digest() -> RedirectResponse:
+def run_agents_daily_digest(_user: str = Depends(require_write_auth)) -> RedirectResponse:
     out = run_daily_digest()
     rel = out.get("report_rel_path", "log/reports")
     return RedirectResponse(url=f"/view?path={rel}", status_code=303)
@@ -338,6 +391,7 @@ def bus_send(
     story_id: str = Form(""),
     epic_id: str = Form(""),
     notes: str = Form(""),
+    user: str = Depends(require_write_auth),
 ) -> RedirectResponse:
     send_message(
         from_role=from_role,
@@ -348,7 +402,7 @@ def bus_send(
         severity=severity,  # type: ignore[arg-type]
         story_id=story_id or None,
         epic_id=epic_id or None,
-        payload={"notes": notes} if notes else {},
+        payload={"notes": notes, "submitted_by": user, "submitted_at_utc": _utc_now()} if notes or user else {},
     )
     return RedirectResponse(url=f"/inbox?role={to_role}&agent_id={to_agent_id}", status_code=303)
 
@@ -362,13 +416,14 @@ def bus_ack(
     notes: str = Form(""),
     redirect_role: str = Form("CoordinationAgent"),
     redirect_agent_id: str = Form("CA-1"),
+    user: str = Depends(require_write_auth),
 ) -> RedirectResponse:
     ack_message(
         message_id=message_id,
         status=status,  # type: ignore[arg-type]
         actor_role=actor_role,
         actor_id=actor_id,
-        notes=notes,
+        notes=(notes + f" (submitted_by={user})").strip(),
     )
     return RedirectResponse(url=f"/inbox?role={redirect_role}&agent_id={redirect_agent_id}", status_code=303)
 

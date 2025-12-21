@@ -30,6 +30,7 @@ def validate(paths: ProjectPaths) -> list[ValidationMessage]:
         "memory/COMM_PROTOCOL.md",
         "memory/ARCH_DECISION_POLICY.md",
         "memory/NOTIFICATION_POLICY.md",
+        "memory/SECURITY_POLICY.md",
         "memory/VERIFICATION_POLICY.md",
         "strategy/ARCHITECTURE.md",
         "strategy/RUNBOOKS.md",
