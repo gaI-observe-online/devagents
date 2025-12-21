@@ -12,6 +12,7 @@ Last updated: 2025-12-21
 ### QA status (beta)
 
 - **Evidence artifact**: `gados-project/verification/BETA-QA-evidence.md`
+- **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **FAIL**: `python3 gados-control-plane/scripts/validate_artifacts.py` (missing in repo)
