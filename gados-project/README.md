@@ -9,28 +9,22 @@ This repository’s GADOS docs are intentionally split into:
 
 ## Repo layout (GADOS docs)
 
-- `gados-project/memory/`
-  - `lifecycle.md`: lifecycle states and the **intent → VERIFIED** contract
-  - `governance.md`: definition of VERIFIED + separation-of-duties enforcement points
-  - `protocol/`
-    - `agent-message-types.md`: agent-to-agent message catalog (schemas + escalation)
-    - `notification-policy.md`: critical realtime vs digest policy, channels, rate limits
-  - `runbooks/`
-    - `local-dev.md`: local dev workflow (dashboard, reports, inbox, governance validation)
-    - `test-env.md`: test environment workflow (`make test-env-up/test-smoke/test`)
-    - `observability.md`: Grafana Explore queries (Tempo/Loki/Mimir) and verification steps
-  - `ui-screenshots-checklist.md`: optional audit checklist for required UI pages
-- `gados-project/strategy/`
-  - `architecture.md`: high-level architecture narrative
-  - `diagrams.md`: Mermaid diagrams (C4 + sequences)
+To keep merges and audits clean, the core GADOS docs are stored as **versioned artifacts**:
+
+- `gados-project/strategy/ARCHITECTURE.md` (Mermaid blocks inside)
+- `gados-project/strategy/RUNBOOKS.md` (local dev, test env, CI, observability)
+- `gados-project/memory/COMM_PROTOCOL.md`
+- `gados-project/memory/NOTIFICATION_POLICY.md`
+- `gados-project/memory/VERIFICATION_POLICY.md`
+- `gados-project/memory/ui-screenshots-checklist.md` (optional audit checklist)
 
 ## Intent → VERIFIED lifecycle (one page)
 
-The authoritative lifecycle is defined in:
+The lifecycle is enforced by the verification policy:
 
-- `gados-project/memory/lifecycle.md` (authoritative)
+- `gados-project/memory/VERIFICATION_POLICY.md` (authoritative)
 
-At a high level:
+At a high level, lifecycle states are:
 
 - **INTENT**: a story/problem statement exists (human or agent)
 - **PLANNED**: explicit plan + acceptance criteria + evidence plan
@@ -41,12 +35,8 @@ At a high level:
 
 ## Authoritative memory files (audit references)
 
-- `gados-project/memory/lifecycle.md`
-- `gados-project/memory/governance.md`
-- `gados-project/memory/protocol/agent-message-types.md`
-- `gados-project/memory/protocol/notification-policy.md`
-- `gados-project/memory/runbooks/local-dev.md`
-- `gados-project/memory/runbooks/test-env.md`
-- `gados-project/memory/runbooks/observability.md`
+- `gados-project/memory/VERIFICATION_POLICY.md`
+- `gados-project/memory/COMM_PROTOCOL.md`
+- `gados-project/memory/NOTIFICATION_POLICY.md`
 - `gados-project/memory/ui-screenshots-checklist.md`
 

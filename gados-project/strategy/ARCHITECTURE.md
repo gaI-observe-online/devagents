@@ -1,4 +1,44 @@
-## Architecture diagrams (Mermaid)
+## GADOS architecture (versioned artifact)
+
+This document is the high-level architecture narrative for GADOS and includes the authoritative Mermaid architecture/sequence diagrams used for reviews and audits.
+
+### Overview
+
+GADOS is a lightweight governance system for agent-assisted software delivery. It turns human/agent **intent** into **audit-ready artifacts** and a **VERIFIED** decision backed by evidence (tests, QA outputs, peer review, VDA decision).
+
+Conceptually, GADOS is a **control-plane** that coordinates:
+
+- intents and lifecycle state transitions
+- agent work (planner/implementer/validator)
+- artifact storage (evidence bundles)
+- governance enforcement (separation-of-duties, required checks)
+- observability (logs/metrics/traces)
+
+### Major components (conceptual)
+
+- **CA GUI**
+  - Human UI for intents, inbox, artifacts, and validation decisions.
+- **Control-plane**
+  - Orchestrates lifecycle transitions, enforces governance rules, and routes work to agents and CI.
+- **Agent bus**
+  - Message transport (durable queue + inbox semantics).
+- **Artifact store**
+  - Durable store for evidence bundles with immutable references (hashes / write-once IDs).
+- **CI / Validator**
+  - Automated validation producing evidence and status updates.
+- **Observability stack (LGTM/Grafana)**
+  - Stores traces (Tempo), logs (Loki), metrics (Mimir) and provides query UX (Grafana).
+
+### Audit-ready properties
+
+- **Traceability**: every decision references evidence IDs and audit log entries.
+- **Immutability**: evidence artifacts are content-addressed or write-once.
+- **Separation of duties**: VERIFIED requires independent peer review and VDA approval.
+- **Reproducibility**: validation can be re-run; outputs are preserved.
+
+---
+
+## Mermaid diagrams
 
 ### C4 Context
 

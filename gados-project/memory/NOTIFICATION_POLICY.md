@@ -7,34 +7,34 @@ This policy defines when GADOS emits notifications, which channels to use, and r
 - **Critical realtime**
   - **Goal**: immediate human attention required to prevent loss of auditability or production risk.
   - **Examples**:
-    - Audit log append failures
-    - Validator/CI tamper detection
-    - Unauthorized attempt to set VERIFIED
-    - Durable queue outage causing message loss risk
+    - audit log append failures
+    - validator/CI tamper detection
+    - unauthorized attempt to set VERIFIED
+    - durable queue outage causing message loss risk
   - **Channels** (preferred order):
-    - Pager / on-call
+    - pager / on-call
     - Slack/Teams “alerts” channel
-    - Email fallback
+    - email fallback
 
 - **High realtime**
   - **Goal**: timely human attention, but not paging unless persistent.
   - **Examples**:
-    - Validation failures on main branch
-    - Repeated nacks for schema/permissions
-    - Evidence bundle missing past SLA
+    - validation failures on main branch
+    - repeated nacks for schema/permissions
+    - evidence bundle missing past SLA
   - **Channels**:
     - Slack/Teams channel + assignment mention
-    - Email if unacknowledged within SLA
+    - email if unacknowledged within SLA
 
 - **Daily digest**
   - **Goal**: operational visibility without interruption.
   - **Examples**:
-    - Number of intents created/planned/verified
-    - Top failing checks
-    - Longest-running in-progress items
+    - number of intents created/planned/verified
+    - top failing checks
+    - longest-running in-progress items
   - **Channels**:
-    - Email digest
-    - Dashboard link
+    - email digest
+    - dashboard link
 
 ### Rate limits (recommended defaults)
 
@@ -44,10 +44,10 @@ This policy defines when GADOS emits notifications, which channels to use, and r
 
 ### Escalation and acknowledgements
 
-- Notifications should include:
+- notifications should include:
   - correlation_id / intent_id
   - link to evidence bundle
   - most recent audit log entries
   - recommended action
-- Human acknowledgement should be recorded as an audit event.
+- human acknowledgement should be recorded as an audit event
 
