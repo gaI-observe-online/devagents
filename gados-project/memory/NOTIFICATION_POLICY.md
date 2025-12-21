@@ -3,6 +3,12 @@
 **Status**: Authoritative / Evolves slowly  
 **Purpose**: Define when and how the system notifies humans and agents, minimizing interrupts while preserving safety.
 
+## Runtime configuration (env vars)
+- **Realtime webhook URL (optional)**: `GADOS_WEBHOOK_URL`
+- **Realtime minimum severity**: `GADOS_WEBHOOK_MIN_SEVERITY` (default: `CRITICAL`)
+- **Signing secret (optional)**: `GADOS_WEBHOOK_HMAC_SECRET`
+  - If set, outbound payloads are signed with HMAC-SHA256 and include header: `X-GADOS-Signature: sha256=<hex>`
+
 ## Channels
 - **In-app inbox**: Control plane `/inbox` (default, free)
 - **Daily digest**: generated report artifacts in `/gados-project/log/reports/` (default, free)
@@ -27,4 +33,15 @@ and record the escalation event in the relevant story log.
 ## Required artifacts
 - Daily digest reports: `/gados-project/log/reports/REPORT-*.md`
 - Bus audit log (message send/ack): `/gados-project/log/bus/bus-events.jsonl`
+
+## Webhook payload schema (v1)
+When webhooks are enabled, realtime dispatch uses:
+- `schema`: `gados.notification.v1`
+- `at`: ISO-8601 UTC timestamp
+- `severity`: `INFO|WARN|ERROR|CRITICAL`
+- `type`: string (e.g. `ARCH_DECISION_REQUESTED`, `ECONOMICS_THRESHOLD_BREACHED`)
+- `correlation_id` (optional): UUID
+- `story_id` / `epic_id` (optional)
+- `artifact_refs` (optional): list of artifact paths
+- `payload` (optional): JSON object
 

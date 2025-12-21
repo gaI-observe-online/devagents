@@ -32,6 +32,8 @@ def validate(paths: ProjectPaths) -> list[ValidationMessage]:
         "memory/NOTIFICATION_POLICY.md",
         "memory/SECURITY_POLICY.md",
         "memory/VERIFICATION_POLICY.md",
+        "memory/ECONOMICS_LEDGER.md",
+        "memory/WORKFLOW_GATES.md",
         "strategy/ARCHITECTURE.md",
         "strategy/RUNBOOKS.md",
         "templates/EPIC.template.md",

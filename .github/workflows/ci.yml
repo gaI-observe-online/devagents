@@ -55,6 +55,8 @@ jobs:
           test -f gados-project/memory/VERIFICATION_POLICY.md
           test -f gados-project/memory/ARCH_DECISION_POLICY.md
           test -f gados-project/memory/SECURITY_POLICY.md
+          test -f gados-project/memory/ECONOMICS_LEDGER.md
+          test -f gados-project/memory/WORKFLOW_GATES.md
 
       - name: Logs on failure
         if: failure()
