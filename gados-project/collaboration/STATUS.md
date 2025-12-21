@@ -25,4 +25,5 @@ Last updated: 2025-12-21
 ### Known blockers / gaps
 
 - **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down` and Grafana/Tempo checks.
+- **Pending merge (critical path hardening)**: see `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry); files: `.github/workflows/blank.yml`, `Makefile`, `app/main.py`
 

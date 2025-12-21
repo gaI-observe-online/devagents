@@ -89,3 +89,20 @@ Next steps:
   - Align default `setup_observability(service_name=...)` to `gados-control-plane` to match runbooks (env already overrides in CI).
   - Consider adding a future CI assertion that a trace exists for `service.name="gados-control-plane"` (Tempo query) once feasible.
 
+#### 2025-12-21 — Critical path hardening (pending merge)
+
+- **Workstream**: Reduce critical-path ambiguity and local BLOCKED impact
+- **Why**: Ensure CI enforces the same gates QA relies on and improve smoke signal.
+- **Changes to merge** (pending):
+  - Updated: `.github/workflows/blank.yml`
+    - `test` job now runs `python gados-control-plane/scripts/validate_artifacts.py`
+    - `integration` job now posts one `/track` event after health checks (generates telemetry)
+  - Updated: `Makefile`
+    - `test-smoke` now prints clearer failure messages for Grafana/service reachability
+  - Updated: `app/main.py`
+    - default `service.name` aligned to runbooks: `gados-control-plane` (still overrideable via `OTEL_SERVICE_NAME`)
+- **How to verify**:
+  - `python3 -m ruff check .`
+  - `python3 -m pytest -q`
+  - `python3 gados-control-plane/scripts/validate_artifacts.py`
+
