@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field
 from app.analytics import track_event
 from app.observability import instrument_fastapi, request_id_ctx, setup_observability
 
-setup_observability(service_name="example-api")
+# Default to the canonical name used in runbooks; may be overridden by OTEL_SERVICE_NAME.
+setup_observability(service_name="gados-control-plane")
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="Example API (Analytics + Observability)")

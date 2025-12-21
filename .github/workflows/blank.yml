@@ -35,6 +35,9 @@ jobs:
           test -f gados-project/memory/ECONOMICS_LEDGER.md
           test -f gados-project/memory/WORKFLOW_GATES.md
 
+      - name: Validate required artifacts (authoritative)
+        run: python gados-control-plane/scripts/validate_artifacts.py
+
       - name: Lint
         run: python -m ruff check .
 
@@ -85,6 +88,11 @@ jobs:
             sleep 1
           done
           curl -fsS http://localhost:8000/health
+
+          # Generate at least one traced request and analytics event.
+          curl -fsS -X POST http://localhost:8000/track \
+            -H 'content-type: application/json' \
+            -d '{"event":"ci_smoke_event","user_id":"ci","properties":{"source":"github-actions"}}'
 
       - name: Stop service
         if: always()
