@@ -14,6 +14,7 @@ This folder is the **system of record** for delivery governance:
 - **Audit logs**: `/gados-project/log/` (append-only delivery trail)
 - **Decisions**: `/gados-project/decision/` (human authority escalations)
 - **Verification**: `/gados-project/verification/` (evidence + peer review packages)
+- **Collaboration hub**: `/gados-project/collaboration/` (shared status + handoffs + decisions)
 
 ## Lifecycle (intent → truth)
 Typical story states:
@@ -42,4 +43,5 @@ Typical story states:
 5. Append delivery events to `/gados-project/log/STORY-XXX.log.yaml`.
 6. Collect evidence and peer review in `/gados-project/verification/`.
 7. Record any escalations in `/gados-project/decision/`.
+8. Coordinate work in `/gados-project/collaboration/` (update STATUS, append HANDOFF/DECISIONS).
 
