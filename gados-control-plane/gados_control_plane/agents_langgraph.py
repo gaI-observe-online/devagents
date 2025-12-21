@@ -7,7 +7,7 @@ from typing import Any, TypedDict
 from langgraph.graph import END, StateGraph
 
 from .artifacts import write_text
-from .paths import ProjectPaths, get_paths
+from .paths import get_paths
 from .reporting import compute_metrics, render_daily_report_md
 from .validator import validate
 

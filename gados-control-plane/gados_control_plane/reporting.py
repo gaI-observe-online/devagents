@@ -120,7 +120,7 @@ def render_daily_report_md(
     validations: list[ValidationMessage],
 ) -> str:
     lines: list[str] = []
-    lines.append(f"# GADOS Daily Governance Digest")
+    lines.append("# GADOS Daily Governance Digest")
     lines.append("")
     lines.append(f"**Generated (UTC)**: {now_utc_iso}")
     lines.append("")

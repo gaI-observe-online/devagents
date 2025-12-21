@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .agents_langgraph import run_daily_digest
+from .bus import ack_message, list_inbox, send_message
 from .artifacts import (
     append_text,
     list_artifacts,
@@ -241,4 +242,59 @@ def run_agents_daily_digest() -> RedirectResponse:
     out = run_daily_digest()
     rel = out.get("report_rel_path", "log/reports")
     return RedirectResponse(url=f"/view?path={rel}", status_code=303)
+
+
+@app.get("/inbox", response_class=HTMLResponse)
+def inbox(request: Request, role: str = "CoordinationAgent", agent_id: str = "CA-1") -> HTMLResponse:
+    msgs = list_inbox(to_role=role, to_agent_id=agent_id, limit=100)
+    return templates.TemplateResponse(
+        "inbox.html",
+        {"request": request, "role": role, "agent_id": agent_id, "messages": msgs},
+    )
+
+
+@app.post("/bus/send")
+def bus_send(
+    from_role: str = Form(...),
+    from_agent_id: str = Form(...),
+    to_role: str = Form(...),
+    to_agent_id: str = Form(...),
+    type: str = Form(...),
+    severity: str = Form("INFO"),
+    story_id: str = Form(""),
+    epic_id: str = Form(""),
+    notes: str = Form(""),
+) -> RedirectResponse:
+    send_message(
+        from_role=from_role,
+        from_agent_id=from_agent_id,
+        to_role=to_role,
+        to_agent_id=to_agent_id,
+        type=type,
+        severity=severity,  # type: ignore[arg-type]
+        story_id=story_id or None,
+        epic_id=epic_id or None,
+        payload={"notes": notes} if notes else {},
+    )
+    return RedirectResponse(url=f"/inbox?role={to_role}&agent_id={to_agent_id}", status_code=303)
+
+
+@app.post("/bus/ack")
+def bus_ack(
+    message_id: str = Form(...),
+    status: str = Form(...),
+    actor_role: str = Form(...),
+    actor_id: str = Form(...),
+    notes: str = Form(""),
+    redirect_role: str = Form("CoordinationAgent"),
+    redirect_agent_id: str = Form("CA-1"),
+) -> RedirectResponse:
+    ack_message(
+        message_id=message_id,
+        status=status,  # type: ignore[arg-type]
+        actor_role=actor_role,
+        actor_id=actor_id,
+        notes=notes,
+    )
+    return RedirectResponse(url=f"/inbox?role={redirect_role}&agent_id={redirect_agent_id}", status_code=303)
 

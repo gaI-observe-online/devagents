@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import Path
 
-from .artifacts import iter_story_specs, parse_story_status, read_text
+from .artifacts import iter_story_specs, parse_story_status
 from .paths import ProjectPaths
 
 
