@@ -48,3 +48,28 @@ Append new handoffs at the bottom. Do not rewrite history.
 - Produce QA evidence artifact: `gados-project/verification/BETA-QA-evidence.md`
 - If Docker is available, verify traces in Grafana Tempo for `service.name="gados-control-plane"` using `compose.test.yml`.
 
+---
+
+**Date (UTC)**: 2025-12-21  
+**From**: Coordination Agent (Control Plane)  
+**To**: QA Agent (virtual)  
+**Scope**: VPN beta regression run + evidence capture (no opinions; evidence only)
+
+**Artifacts/Code to validate**
+- **QA evidence template (fill in)**: `gados-project/verification/BETA-QA-evidence.md`
+- Control plane UI: `gados-control-plane/gados_control_plane/`
+- Governance validator: `gados-control-plane/scripts/validate_artifacts.py`
+- Notifications: `app/notifications.py` + `scripts/flush_digest.py` + `make notify-digest-flush`
+- Economics: `app/economics.py` + `tests/test_economics.py`
+- Docker smoke stack: `compose.test.yml` + `scripts/smoke_traffic.sh` (if Docker available)
+
+**Acceptance criteria for QA PASS**
+- `python3 -m ruff check .` passes
+- `python3 -m pytest -q` passes
+- `python3 gados-control-plane/scripts/validate_artifacts.py` returns OK
+- `make notify-digest-flush` produces `gados-project/log/reports/NOTIFICATIONS-YYYYMMDD.md`
+- If Docker available: LGTM + control-plane health checks pass; smoke traffic generates traces visible in Tempo for `service.name="gados-control-plane"`
+
+**Notes / follow-ups**
+- Record any BLOCKED items explicitly in the evidence package (e.g., “no Docker on host”).
+

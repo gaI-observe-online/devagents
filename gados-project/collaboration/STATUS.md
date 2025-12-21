@@ -7,7 +7,7 @@ Last updated (UTC): 2025-12-21
 - **Control plane UI**: dashboard/artifacts/create/reports/inbox/decisions live (FastAPI + templates)
 - **Agent bus + notifications**: bus live; notifications module + digest flush tooling integrated; webhook integration not yet wired into control-plane UI
 - **Economics loop**: economics ledger spec + economics module + tests present; runtime ledger writer + trigger-to-escalation wiring pending
-- **QA / evidence**: ready for QA agent to run regression + produce evidence artifacts
+- **QA / evidence**: QA agent assigned; evidence package to be produced at `gados-project/verification/BETA-QA-evidence.md`
 
 ## Blockers
 - Docker-based LGTM validation requires a machine with Docker (this environment may not support Docker).
