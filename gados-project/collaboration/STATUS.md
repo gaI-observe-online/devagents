@@ -14,6 +14,7 @@ Last updated: 2025-12-21
 - **Evidence artifact**: `gados-project/verification/BETA-QA-evidence.md`
 - **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
 - **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
+- **QA audit evidence**: `gados-project/collaboration/QA_AUDIT.md` (PASS + controlled FAIL examples)
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
