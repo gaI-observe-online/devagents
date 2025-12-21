@@ -1,20 +1,20 @@
 # STATUS (Shared)
 
-Last updated (UTC): <YYYY-MM-DD>
+Last updated (UTC): 2025-12-21
 
 ## Workstreams
-- **Governance enforcement**: <status>
-- **Control plane UI**: <status>
-- **Agent bus + notifications**: <status>
-- **Economics loop**: <status>
-- **QA / evidence**: <status>
+- **Governance enforcement**: policies + validator + CI checks in place; enforcement tightening (WORKFLOW_GATES parsing) pending
+- **Control plane UI**: dashboard/artifacts/create/reports/inbox/decisions live (FastAPI + templates)
+- **Agent bus + notifications**: bus live; notifications module + digest flush tooling integrated; webhook integration not yet wired into control-plane UI
+- **Economics loop**: economics ledger spec + economics module + tests present; runtime ledger writer + trigger-to-escalation wiring pending
+- **QA / evidence**: ready for QA agent to run regression + produce evidence artifacts
 
 ## Blockers
-- <none>
+- Docker-based LGTM validation requires a machine with Docker (this environment may not support Docker).
 
 ## QA snapshot
-- **ruff**: <pass/fail + link>
-- **pytest**: <pass/fail + link>
-- **governance validator**: <pass/fail + link>
-- **docker smoke (LGTM + control-plane)**: <pass/fail + notes>
+- **ruff**: PASS (`python3 -m ruff check .`)
+- **pytest**: PASS (`python3 -m pytest -q`)
+- **governance validator**: PASS (`python3 gados-control-plane/scripts/validate_artifacts.py`)
+- **docker smoke (LGTM + control-plane)**: PENDING (run via `make test-env-up && make test-smoke && make test && make test-env-down` on Docker-capable host)
 
