@@ -7,6 +7,7 @@ Last updated (UTC): 2025-12-21
 - **Control plane UI**: dashboard/artifacts/create/reports/inbox/decisions live (FastAPI + templates)
 - **Agent bus + notifications**: bus live; notifications module + digest flush tooling integrated; webhook integration not yet wired into control-plane UI
 - **Economics loop**: economics ledger spec + economics module + tests present; runtime ledger writer + trigger-to-escalation wiring pending
+- **Observability tightening**: awaiting handoff entry (branch/PR + verification evidence) in `collaboration/HANDOFF.md`
 - **QA / evidence**: QA agent assigned; evidence package to be produced at `gados-project/verification/BETA-QA-evidence.md`
 
 ## Critical path (VPN beta)
