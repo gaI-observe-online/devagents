@@ -42,6 +42,27 @@ def setup_logging(service_name: str) -> None:
 
     logging.getLogger(__name__).info("logging_configured", extra={"service_name": service_name})
 
+def _parse_otel_headers(raw: str | None) -> dict[str, str] | None:
+    """
+    Parse OTEL_EXPORTER_OTLP_HEADERS style strings:
+    "k1=v1,k2=v2" -> {"k1": "v1", "k2": "v2"}
+    """
+    if not raw:
+        return None
+    out: dict[str, str] = {}
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        k = k.strip()
+        v = v.strip()
+        if k and v:
+            out[k] = v
+    return out or None
+
 
 def setup_observability(service_name: str, otlp_endpoint: str | None = None) -> None:
     """
@@ -54,6 +75,7 @@ def setup_observability(service_name: str, otlp_endpoint: str | None = None) -> 
         return
 
     endpoint = otlp_endpoint or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318")
+    headers = _parse_otel_headers(os.getenv("OTEL_EXPORTER_OTLP_HEADERS"))
 
     resource = Resource.create(
         {
@@ -64,11 +86,15 @@ def setup_observability(service_name: str, otlp_endpoint: str | None = None) -> 
     )
 
     tracer_provider = TracerProvider(resource=resource)
-    tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")))
+    tracer_provider.add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces", headers=headers),
+        )
+    )
     trace.set_tracer_provider(tracer_provider)
 
     metric_reader = PeriodicExportingMetricReader(
-        OTLPMetricExporter(endpoint=f"{endpoint}/v1/metrics"),
+        OTLPMetricExporter(endpoint=f"{endpoint}/v1/metrics", headers=headers),
         export_interval_millis=int(os.getenv("OTEL_METRIC_EXPORT_INTERVAL_MS", "5000")),
     )
     metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))

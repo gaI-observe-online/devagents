@@ -54,3 +54,25 @@ curl -s -X POST http://localhost:8000/track \
 - Copy `app/observability.py` + `app/analytics.py` into your service and call `setup_observability()` once on startup.
 - Keep `track_event()` as the single entry point for product analytics so you can later swap the sink (PostHog/Segment/Snowplow/etc.) without touching business code.
 
+## Quick start (SaaS, free tier)
+
+### Grafana Cloud Free (recommended)
+
+1) Create a free Grafana Cloud stack and open **OpenTelemetry / OTLP** settings.
+
+2) Set these environment variables for the API:
+
+```bash
+export OTEL_SERVICE_NAME=example-api
+export DEPLOYMENT_ENV=dev
+
+# Use the OTLP HTTP endpoint provided by Grafana Cloud, typically ending with /otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://<your-grafana-cloud-otlp-endpoint>"
+
+# Set the auth header exactly as Grafana Cloud tells you (usually Basic auth).
+# Format: "Authorization=Basic <token>"
+export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <your-token>"
+```
+
+3) Run the service and generate traffic (same as local).
+
