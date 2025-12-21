@@ -1,4 +1,4 @@
-.PHONY: test-env-up test-env-down test-smoke test
+.PHONY: test-env-up test-env-down test-smoke test notify-digest-flush
 
 test-env-up:
 	docker compose -f compose.test.yml up -d --build
@@ -11,4 +11,7 @@ test-smoke:
 
 test:
 	python -m pytest -q
+
+notify-digest-flush:
+	python scripts/flush_digest.py
 
