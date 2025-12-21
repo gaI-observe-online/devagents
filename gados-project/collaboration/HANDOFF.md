@@ -106,3 +106,13 @@ Next steps:
   - `python3 -m pytest -q`
   - `python3 gados-control-plane/scripts/validate_artifacts.py`
 
+#### 2025-12-21 — Ready to merge (branch details)
+
+- **PR**: #2 `System status retrieval` (`https://github.com/gaI-observe-online/devagents/pull/2`)
+- **Branch**: `cursor/system-status-retrieval-bd2b`
+- **HEAD commit**: `48ed2a2c6f8ca8a7bc94bfeca89b82ccd009c0c3`
+- **Merge readiness**:
+  - working tree clean on this branch
+  - QA artifacts present (`gados-project/verification/BETA-QA-evidence.md`, `gados-project/log/reports/BETA-QA-regression-20251221.md`, `gados-project/collaboration/QA_AUDIT.md`)
+  - CI includes `test` + `integration` jobs; integration is Docker-based and runs in GitHub Actions
+

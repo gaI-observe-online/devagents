@@ -6,7 +6,7 @@ Last updated: 2025-12-21
 
 | Workstream | Owner | Branch / PR | Status | Next step | Blockers |
 |---|---|---|---|---|---|
-| Analytics + Observability starter kit | Agent | `cursor/system-status-retrieval-bd2b` / PR #2 | IN_PROGRESS | Align PR diff with expected file list; ensure QA artifacts included | None |
+| Analytics + Observability starter kit | Agent | `cursor/system-status-retrieval-bd2b` / PR #2 | READY_TO_MERGE | Merge PR #2 after CI green | Docker integration is CI-only |
 | GADOS strategic plan | Agent | `cursor/gados-strategic-game-plan-58a6` / PR #1 | IN_PROGRESS | Review + reconcile docs | None |
 
 ### QA status (beta)
