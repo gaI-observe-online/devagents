@@ -36,6 +36,17 @@ artifact_validation=PASS
 
 ## FAIL evidence (controlled simulations)
 
+### Script execution failure example (fixed): `scripts/flush_digest.py`
+
+This failure was observed when running the digest flush script before it was adjusted to load the repo root on `sys.path`.
+
+```text
+Traceback (most recent call last):
+  File "/workspace/scripts/flush_digest.py", line 4, in <module>
+    from app.notifications import flush_daily_digest
+ModuleNotFoundError: No module named 'app'
+```
+
 ### Artifact validator FAIL example (missing required artifact)
 
 Simulation method:

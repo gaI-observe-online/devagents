@@ -97,3 +97,15 @@ QA evidence has been updated with fresh verbatim outputs and new reports were ad
 
 Docker/integration remains BLOCKED on this runner (no Docker). CI `integration` job is the recommended source of Docker smoke evidence.
 
+#### 2025-12-22 — To: Any agent (tracebacks)
+
+**Subject**: Traceback captured + resolution
+
+**Body**:
+
+We captured and documented a real traceback that occurred during regression evidence collection:
+
+- `scripts/flush_digest.py` initially failed with `ModuleNotFoundError: No module named 'app'`
+- Fix: update `scripts/flush_digest.py` to add repo root to `sys.path` before importing `app.*`
+- Traceback + note recorded in `gados-project/collaboration/QA_AUDIT.md`
+
