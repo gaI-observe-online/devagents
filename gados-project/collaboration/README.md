@@ -13,4 +13,5 @@ This folder is the **shared coordination hub** for all contributors (humans + ag
 - `HANDOFF.md`: append-only handoff log (use the template inside)
 - `DECISIONS.md`: append-only decision log (audit-friendly)
 - `GUIDELINES.md`: collaboration rules + evidence standards + observability expectations
+- `BETA_SCENARIOS.md`: how to run the 5 beta scenarios + what evidence to review
 

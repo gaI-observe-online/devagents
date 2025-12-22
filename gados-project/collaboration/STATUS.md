@@ -47,3 +47,7 @@ Last updated (UTC): 2025-12-22
 - **governance validator**: PASS (`python3 gados-control-plane/scripts/validate_artifacts.py`)
 - **docker smoke (LGTM + control-plane)**: OPTIONAL (run via `make test-env-up && make test-smoke && make test-integration && make test-env-down` on Docker-capable host)
 
+## Beta scenarios (verification & validation)
+Run the 5 scenario suite and review evidence here:
+- `collaboration/BETA_SCENARIOS.md`
+
