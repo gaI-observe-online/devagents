@@ -1,5 +1,16 @@
+"""Flush queued daily digest notifications.
+
+This script is designed to be run from the repo root or via `make notify-digest-flush`.
+"""
+
+# ruff: noqa: E402
+
 import os
 import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(_REPO_ROOT))
 
 from app.notifications import flush_daily_digest
 

@@ -1,8 +1,8 @@
 ## BETA QA evidence package
 
-Date: 2025-12-21  
+Date: 2025-12-22  
 Repo: `gaI-observe-online/devagents`  
-Commit under test: `066e9e1350ad1083a331ef7e94897a6d19c5b815`
+Commit under test: `ffdbf8d0d39a0620d10a5734680cb5e70fa64e78`
 
 ### Environment
 
@@ -63,13 +63,51 @@ All checks passed!
 ```bash
 python3 -m pytest -q
 .................                                                        [100%]
-17 passed in 0.43s
+17 passed in 0.51s
 ```
 
 ```bash
 python3 gados-control-plane/scripts/validate_artifacts.py
 artifact_validation=PASS
 ```
+
+### Notifications (daily digest flush)
+
+```bash
+# Seed one digest event and flush via a local webhook receiver.
+bash -lc "rm -f /tmp/gados_digest.jsonl; python3 -c 'from app.notifications import NotificationEvent, enqueue_digest_event; enqueue_digest_event(NotificationEvent(event_type=\"qa.digest.seed\", priority=\"normal\", summary=\"seed\"), store_path=\"/tmp/gados_digest.jsonl\")'; python3 - <<'PY'
+import os, subprocess, threading, time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class H(BaseHTTPRequestHandler):
+    def do_POST(self):
+        n = int(self.headers.get('Content-Length', '0'))
+        _ = self.rfile.read(n)
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'ok')
+
+    def log_message(self, format, *args):
+        return
+
+s = HTTPServer(('127.0.0.1', 9999), H)
+t = threading.Thread(target=s.serve_forever, daemon=True)
+t.start()
+time.sleep(0.2)
+os.environ['GADOS_WEBHOOK_URL'] = 'http://127.0.0.1:9999'
+os.environ['GADOS_DIGEST_STORE_PATH'] = '/tmp/gados_digest.jsonl'
+r = subprocess.run(['python3', 'scripts/flush_digest.py'], capture_output=True, text=True)
+print(r.stdout, end='')
+print(r.stderr, end='')
+s.shutdown(); s.server_close()
+raise SystemExit(r.returncode)
+PY"
+shipped_digest_events=1
+```
+
+Notifications report artifact:
+
+- `gados-project/log/reports/NOTIFICATIONS-20251222.md`
 
 ### CI evidence (GitHub Actions)
 
@@ -106,6 +144,7 @@ Smoke checks:
   - Grafana: http://localhost:3000/api/health
   - Service: http://localhost:8000/health
 curl: (7) Failed to connect to localhost port 3000 after 0 ms: Couldn't connect to server
+FAIL: Grafana not reachable (is docker compose up?)
 make: *** [Makefile:20: test-smoke] Error 7
 ```
 

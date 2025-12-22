@@ -222,3 +222,15 @@ Add a unit test that:
   - `gados-project/collaboration/STATUS.md`
   - `gados-project/collaboration/HANDOFF.md`
 
+#### 2025-12-22 — QA evidence COMPLETE (30-minute deliverable)
+
+- **Status**: COMPLETE (verbatim outputs captured; Docker steps marked BLOCKED with reason)
+- **Updated**:
+  - `gados-project/verification/BETA-QA-evidence.md`
+- **Added**:
+  - `gados-project/log/reports/BETA-QA-regression-20251222.md`
+  - `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+- **Key results**:
+  - PASS: `ruff`, `pytest`, `validate_artifacts.py`, notifications digest flush
+  - BLOCKED: Docker integration (no Docker on this runner)
+

@@ -1,6 +1,6 @@
 ## Shared status board
 
-Last updated: 2025-12-22 (regression scope expanded)
+Last updated: 2025-12-22 (QA evidence completed)
 
 ### Active PRs / branches
 
@@ -17,12 +17,15 @@ Last updated: 2025-12-22 (regression scope expanded)
 - **Regression plan**: `gados-project/verification/BETA-REGRESSION-PLAN.md`
 - **Evidence pack checklist**: `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
 - **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
+- **Regression log (latest)**: `gados-project/log/reports/BETA-QA-regression-20251222.md`
+- **Notifications report (latest)**: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
 - **QA audit evidence**: `gados-project/collaboration/QA_AUDIT.md` (PASS + controlled FAIL examples)
 - **Collab inbox**: `gados-project/collaboration/INBOX.md` (async messages for other agents)
 - **Integration code review notes**: `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry)
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
+  - **PASS**: notifications digest flush (see `NOTIFICATIONS-20251222.md`)
   - **BLOCKED (local)**: Docker integration steps (Docker not installed in this environment)
   - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
 
