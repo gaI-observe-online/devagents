@@ -69,6 +69,10 @@ Tear down:
 make obs-down
 ```
 
+## Grafana Cloud (free) clickpath (optional)
+
+See: `gados-project/strategy/GRAFANA_CLOUD_CLICKPATH.md`
+
 ## Capture QA evidence (beta proof)
 
 Fill: `gados-project/verification/BETA-QA-evidence.md`
