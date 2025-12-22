@@ -1,0 +1,132 @@
+# Scope and Context
+
+PR Ref: `local`
+Repo: `/workspace`
+
+## Changed files
+- `.env.example`
+- `.github/ISSUE_TEMPLATE/status-update.md`
+- `.github/pull_request_template.md`
+- `.github/workflows/blank.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/code-review-factory.yml`
+- `.gitignore`
+- `Makefile`
+- `README.md`
+- `app/__init__.py`
+- `app/analytics.py`
+- `app/economics.py`
+- `app/main.py`
+- `app/notifications.py`
+- `app/observability.py`
+- `compose.test.yml`
+- `docker-compose.yml`
+- `gados-control-plane/Dockerfile`
+- `gados-control-plane/README.md`
+- `gados-control-plane/gados_control_plane/__init__.py`
+- `gados-control-plane/gados_control_plane/agents_langgraph.py`
+- `gados-control-plane/gados_control_plane/artifacts.py`
+- `gados-control-plane/gados_control_plane/beta_policy_drift.py`
+- `gados-control-plane/gados_control_plane/beta_sla_sentinel.py`
+- `gados-control-plane/gados_control_plane/beta_spend_guardrail.py`
+- `gados-control-plane/gados_control_plane/bus.py`
+- `gados-control-plane/gados_control_plane/main.py`
+- `gados-control-plane/gados_control_plane/paths.py`
+- `gados-control-plane/gados_control_plane/reporting.py`
+- `gados-control-plane/gados_control_plane/templates/artifacts.html`
+- `gados-control-plane/gados_control_plane/templates/base.html`
+- `gados-control-plane/gados_control_plane/templates/create.html`
+- `gados-control-plane/gados_control_plane/templates/dashboard.html`
+- `gados-control-plane/gados_control_plane/templates/decisions.html`
+- `gados-control-plane/gados_control_plane/templates/inbox.html`
+- `gados-control-plane/gados_control_plane/templates/reports.html`
+- `gados-control-plane/gados_control_plane/templates/validate.html`
+- `gados-control-plane/gados_control_plane/templates/view.html`
+- `gados-control-plane/gados_control_plane/validator.py`
+- `gados-control-plane/pyproject.toml`
+- `gados-control-plane/requirements.txt`
+- `gados-control-plane/scripts/validate_artifacts.py`
+- `gados-control-plane/tests/test_bus.py`
+- `gados-control-plane/tests/test_validator_workflow_gates.py`
+- `gados-project/README.md`
+- `gados-project/collaboration/DECISIONS.md`
+- `gados-project/collaboration/GUIDELINES.md`
+- `gados-project/collaboration/HANDOFF.md`
+- `gados-project/collaboration/INBOX.md`
+- `gados-project/collaboration/README.md`
+- `gados-project/collaboration/STATUS.md`
+- `gados-project/decision/README.md`
+- `gados-project/log/README.md`
+- `gados-project/log/bus/README.md`
+- `gados-project/log/bus/bus-events.jsonl`
+- `gados-project/log/economics/README.md`
+- `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+- `gados-project/log/reports/README.md`
+- `gados-project/memory/ARCH_DECISION_POLICY.md`
+- `gados-project/memory/ARCH_RULES.md`
+- `gados-project/memory/BETA_POLICY_BASELINE.yaml`
+- `gados-project/memory/COMM_PROTOCOL.md`
+- `gados-project/memory/DESIGN_PRINCIPLES.md`
+- `gados-project/memory/ECONOMICS_LEDGER.md`
+- `gados-project/memory/FOUNDATION.md`
+- `gados-project/memory/NOTIFICATION_POLICY.md`
+- `gados-project/memory/REVIEW_FACTORY_POLICY.yaml`
+- `gados-project/memory/SECURITY_POLICY.md`
+- `gados-project/memory/VERIFICATION_POLICY.md`
+- `gados-project/memory/WORKFLOW_GATES.md`
+- `gados-project/memory/ui-screenshots-checklist.md`
+- `gados-project/plan/changes/README.md`
+- `gados-project/plan/epics/README.md`
+- `gados-project/plan/stories/README.md`
+- `gados-project/playbooks/README.md`
+- `gados-project/playbooks/auth_session.md`
+- `gados-project/playbooks/ecommerce_integrity.md`
+- `gados-project/playbooks/owasp_asvs_l2.md`
+- `gados-project/playbooks/pci_checkout.md`
+- `gados-project/playbooks/privacy_pii.md`
+- `gados-project/strategy/ARCHITECTURE.md`
+- `gados-project/strategy/BETA_RUNBOOK.md`
+- `gados-project/strategy/BETA_SCOPE.md`
+- `gados-project/strategy/EPIC-000-GADOS-STRATEGIC-GAME-PLAN.md`
+- `gados-project/strategy/GADOS-STRATEGIC-GAME-PLAN.html`
+- `gados-project/strategy/README.md`
+- `gados-project/strategy/RUNBOOKS.md`
+- `gados-project/templates/ADR.template.md`
+- `gados-project/templates/CHANGE.template.yaml`
+- `gados-project/templates/EPIC.template.md`
+- `gados-project/templates/ESCALATION.template.md`
+- `gados-project/templates/PEER_REVIEW.template.md`
+- `gados-project/templates/STORY.log.template.yaml`
+- `gados-project/templates/STORY.template.md`
+- `gados-project/templates/VERIFICATION_EVIDENCE.template.md`
+- `gados-project/verification/BETA-QA-evidence.md`
+- `gados-project/verification/README.md`
+- `gados_common/__init__.py`
+- `gados_common/analytics.py`
+- `gados_common/fileio.py`
+- `gados_common/observability.py`
+- `pytest.ini`
+- `requirements.txt`
+- `scripts/audit_graph.py`
+- `scripts/flush_digest.py`
+- `scripts/generate_review_pack.py`
+- `scripts/run_daily_spend_guardrail.py`
+- `scripts/run_policy_drift_watchdog.py`
+- `scripts/run_sla_sentinel.py`
+- `scripts/smoke_traffic.sh`
+- `tests/integration/test_control_plane_smoke.py`
+- `tests/test_app.py`
+- `tests/test_beta_guardrail.py`
+- `tests/test_beta_policy_drift.py`
+- `tests/test_beta_sla_sentinel.py`
+- `tests/test_economics.py`
+- `tests/test_notifications.py`
+
+## Notes
+- Changed files: 117
+- Secrets scan exit_code=0
+- SAST(Bandit) exit_code=1
+- SCA(pip-audit) exit_code=0; SBOM exit_code=0
+- DAST-lite skipped (configure and run separately).
+- PCI/Checkout IVA completed (deterministic).
+- Playbook: /workspace/gados-project/playbooks/pci_checkout.md
