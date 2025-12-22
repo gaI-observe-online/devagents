@@ -68,17 +68,95 @@ def _load_policy(repo_root: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _allocate_run_dir(*, base_dir: Path, run_key: str) -> tuple[str, Path]:
+    """
+    Create a new immutable run folder under base_dir.
+    Uses monotonic numbering per run_key: REVIEW-<run_key>-001, -002, ...
+    """
+    base_dir.mkdir(parents=True, exist_ok=True)
+    prefix = f"REVIEW-{run_key}-"
+    n = 1
+    for p in base_dir.iterdir():
+        if not p.is_dir():
+            continue
+        name = p.name
+        if not name.startswith(prefix):
+            continue
+        tail = name.removeprefix(prefix)
+        if tail.isdigit():
+            n = max(n, int(tail) + 1)
+    run_id = f"{prefix}{n:03d}"
+    out_dir = base_dir / run_id
+    out_dir.mkdir(parents=True, exist_ok=False)
+    return run_id, out_dir
+
+
+def _override_path(repo_root: Path, run_key: str) -> Path:
+    """
+    Human sign-off artifact required to override NO-GO.
+    """
+    return repo_root / "gados-project" / "decision" / f"OVERRIDE-{run_key}.md"
+
+
+def _has_human_override(repo_root: Path, run_key: str) -> bool:
+    p = _override_path(repo_root, run_key)
+    if not p.exists():
+        return False
+    txt = p.read_text(encoding="utf-8", errors="ignore").lower()
+    # Minimal explicit sign-off markers (human must write these).
+    return ("decision:" in txt and "override" in txt) and ("approved_by" in txt or "approved by" in txt)
+
+
+def _pm_reason(reason: str) -> dict[str, str]:
+    """
+    Convert technical blocker -> PM language + owner.
+    """
+    r = reason.lower()
+    if r.startswith("secrets detected"):
+        return {
+            "pm_summary": "Hardcoded credential/secret detected. Release blocked until removed and credentials rotated.",
+            "owner": "Security+Eng",
+        }
+    if r.startswith("vulnerable dependencies"):
+        return {"pm_summary": "Known vulnerable dependency detected. Release blocked until upgraded or exception approved.", "owner": "Eng"}
+    if r.startswith("sast findings"):
+        return {"pm_summary": "High-severity code security issue detected. Release blocked until fixed.", "owner": "Eng"}
+    if r.startswith("governance validator failed"):
+        return {"pm_summary": "Governance rules failed (required artifacts missing). Release blocked until corrected.", "owner": "Eng"}
+    return {"pm_summary": reason, "owner": "Eng"}
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
-    out_dir = Path(os.getenv("REVIEW_PACK_DIR", "review-pack")).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-    evidence_dir = out_dir / "Evidence"
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-
     pr = os.getenv("GITHUB_PR_NUMBER", "").strip()
     sha = os.getenv("GITHUB_SHA", "").strip()
     ref = os.getenv("GITHUB_REF", "").strip()
     repo = os.getenv("GITHUB_REPOSITORY", "").strip()
+
+    # Run directory selection:
+    # - In CI: set REVIEW_PACK_DIR to a staging folder (e.g. "review-pack"); we create a new run subfolder inside it.
+    # - Locally: default to a versioned repo artifact path for immutability.
+    base_env = os.getenv("REVIEW_PACK_DIR", "").strip()
+    if base_env:
+        base_dir = Path(base_env).resolve()
+    else:
+        base_dir = (repo_root / "gados-project" / "log" / "reports" / "review-runs").resolve()
+
+    run_key_env = os.getenv("REVIEW_RUN_KEY", "").strip()
+    if run_key_env:
+        run_key = run_key_env
+    else:
+        sha7 = sha[:7] if sha else "nosha"
+        run_key = f"pr{pr}-{sha7}" if pr else f"local-{sha7}"
+
+    run_id, out_dir = _allocate_run_dir(base_dir=base_dir, run_key=run_key)
+    evidence_dir = out_dir / "Evidence"
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+
+    # Evidence immutability marker (never overwrite a finalized run folder).
+    finalized_marker = out_dir / ".finalized"
+    if finalized_marker.exists():
+        raise SystemExit(f"Refusing to overwrite finalized run folder: {out_dir}")
 
     policy = _load_policy(repo_root)
 
@@ -277,7 +355,12 @@ def main() -> int:
     if _severity_rank(max_sast) >= _severity_rank(sast_floor):
         blocked_reasons.append(f"SAST findings at/above {sast_floor} (max={max_sast})")
 
-    recommendation = "GO" if not blocked_reasons else "NO-GO"
+    override_ok = _has_human_override(repo_root, run_key)
+    if blocked_reasons and override_ok:
+        recommendation = "GO_WITH_EXCEPTIONS"
+        blocked_reasons.append(f"Human override present: {str(_override_path(repo_root, run_key).relative_to(repo_root))}")
+    else:
+        recommendation = "GO" if not blocked_reasons else "NO-GO"
 
     # Pack: Executive summary + domain checklists + repro template
     (out_dir / "Executive_Summary.md").write_text(
@@ -410,8 +493,74 @@ def main() -> int:
         sums.append(f"{h}  {rel}")
     sums_path.write_text("\n".join(sums) + "\n", encoding="utf-8")
 
-    print(f"Wrote review pack: {out_dir}")
-    return 1 if blocked_reasons else 0
+    # Write run metadata for UI + audit traceability.
+    top_findings = sorted(findings, key=lambda f: -_severity_rank(str(f.get("severity", "LOW"))))[:3]
+    pm_blockers = [_pm_reason(r) for r in blocked_reasons] if blocked_reasons else []
+    run_meta = {
+        "schema": "gados.review_run.v1",
+        "run_id": run_id,
+        "run_key": run_key,
+        "scenario": "code-review-factory",
+        "generated_at_utc": _utc_now_iso(),
+        "repo": repo,
+        "ref": ref,
+        "sha": sha,
+        "pr": pr,
+        "recommendation": recommendation,  # GO | NO-GO | GO_WITH_EXCEPTIONS
+        "blocked_reasons": blocked_reasons,
+        "pm_blockers": pm_blockers,
+        "counts": {
+            "secrets": secret_count,
+            "sca_vulns": sca_vuln_count,
+            "max_sast_severity": max_sast,
+        },
+        "top_findings": top_findings,
+        "override_required": bool(blocked_reasons and not override_ok),
+        "override_artifact": str(_override_path(repo_root, run_key).relative_to(repo_root)),
+    }
+    (out_dir / "run.json").write_text(json.dumps(run_meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    finalized_marker.write_text("finalized\n", encoding="utf-8")
+
+    # Decision artifact in repo (PM-readable).
+    decision_dir = repo_root / "gados-project" / "decision"
+    decision_dir.mkdir(parents=True, exist_ok=True)
+    decision_path = decision_dir / f"{run_id}.md"
+    if not decision_path.exists():
+        lines: list[str] = []
+        lines.append(f"# {run_id}: Code Review Factory decision")
+        lines.append("")
+        lines.append(f"**Generated (UTC)**: {_utc_now_iso()}")
+        lines.append(f"**Scenario**: code-review-factory")
+        if pr:
+            lines.append(f"**PR**: `{pr}`")
+        if sha:
+            lines.append(f"**SHA**: `{sha}`")
+        lines.append("")
+        lines.append(f"## Decision: **{recommendation}**")
+        lines.append("")
+        lines.append("## PM summary (plain language)")
+        if blocked_reasons and not override_ok:
+            for r in pm_blockers:
+                lines.append(f"- **BLOCKER**: {r['pm_summary']} (**Owner**: {r['owner']})")
+        elif recommendation == "GO_WITH_EXCEPTIONS":
+            lines.append("- Release allowed with explicit Human Authority override on file.")
+        else:
+            lines.append("- No blockers detected by automated gates.")
+        lines.append("")
+        lines.append("## Evidence")
+        lines.append(f"- Review pack folder: `{out_dir.relative_to(repo_root)}`")
+        lines.append(f"- Findings: `{(out_dir / 'Findings.csv').relative_to(repo_root)}`")
+        lines.append(f"- SHA256SUMS: `{(out_dir / 'SHA256SUMS.txt').relative_to(repo_root)}`")
+        lines.append("")
+        lines.append("## Human override (required to bypass NO-GO)")
+        lines.append(f"- Create: `{_override_path(repo_root, run_key).relative_to(repo_root)}`")
+        lines.append("- Must include `Decision: OVERRIDE` and `Approved by:` (name/date).")
+        lines.append("")
+        decision_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    print(f"Wrote review run: {out_dir}")
+    # Irreversible NO-GO path: if blocked and no explicit human override, fail the run.
+    return 1 if (blocked_reasons and not override_ok) else 0
 
 
 if __name__ == "__main__":
