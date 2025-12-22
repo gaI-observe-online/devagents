@@ -200,3 +200,14 @@ Add a unit test that:
   - escalation doc created
   - `send_message` called (monkeypatch) with expected severity/type
 
+#### 2025-12-22 — Regression scope expansion (product pipeline)
+
+- **Added QA artifacts**:
+  - `gados-project/verification/BETA-REGRESSION-PLAN.md` (inputs → expectations → evidence by pipeline stage)
+  - `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md` (audit pack structure + file-by-file validation)
+- **Updated template**:
+  - `gados-project/verification/BETA-QA-evidence-TEMPLATE.md` now includes ACs for:
+    - pipeline stages (ingestion/tools/IVA/coordinator/audit pack)
+    - policy gates (GO/NO-GO)
+    - offline/zero-cost + deterministic behavior
+

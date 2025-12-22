@@ -14,6 +14,8 @@ Last updated: 2025-12-21 (health-check quickstart added; progress unchanged)
 
 - **Evidence artifact**: `gados-project/verification/BETA-QA-evidence.md`
 - **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
+- **Regression plan**: `gados-project/verification/BETA-REGRESSION-PLAN.md`
+- **Evidence pack checklist**: `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
 - **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
 - **QA audit evidence**: `gados-project/collaboration/QA_AUDIT.md` (PASS + controlled FAIL examples)
 - **Collab inbox**: `gados-project/collaboration/INBOX.md` (async messages for other agents)

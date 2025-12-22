@@ -49,6 +49,9 @@ Define ACs for each target workflow at minimum:
 - **AC-ECO-1 (economics)**
 - **AC-VAL-1 (validator gate)**
 - **AC-INT-1 (docker/integration)**
+- **AC-PIP-1 (pipeline stages)**: ingestion → tools → IVA → coordinator → audit pack
+- **AC-POL-1 (policy gates)**: GO/NO-GO rules enforced from evidence
+- **AC-OFF-1 (offline/zero-cost)**: no outbound calls; no paid APIs; deterministic outputs
 
 ---
 
@@ -121,10 +124,18 @@ make test-env-down
 | AC-ECO-1 |  |  |
 | AC-VAL-1 |  |  |
 | AC-INT-1 |  |  |
+| AC-PIP-1 |  |  |
+| AC-POL-1 |  |  |
+| AC-OFF-1 |  |  |
 
 ---
 
 ## Notes / blockers
 
 - If any step is BLOCKED, state the exact reason and the required environment to unblock it.
+
+## Regression plan references
+
+- Regression plan: `gados-project/verification/BETA-REGRESSION-PLAN.md`
+- Evidence pack checklist: `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
 
