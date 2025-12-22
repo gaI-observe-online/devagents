@@ -6,6 +6,8 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
+from gados_common.fileio import append_text_locked
+
 Category = Literal["llm", "compute", "storage", "saas", "human", "other"]
 Unit = Literal["tokens", "seconds", "bytes", "dollars", "count"]
 Producer = Literal["control-plane", "agent", "ci", "validator"]
@@ -59,33 +61,7 @@ def append_ledger_entry(entry: LedgerEntry, *, path: str) -> None:
     # One atomic append under an exclusive lock (best-effort on non-POSIX).
     # We also flush + fsync for crash-consistency of the newly appended line.
     line = json.dumps(record, separators=(",", ":"), sort_keys=True, allow_nan=False) + "\n"
-    _append_jsonl_locked(path, line)
-
-
-def _append_jsonl_locked(path: str, line: str) -> None:
-    """
-    Append `line` to `path` with best-effort cross-process locking.
-
-    Uses `fcntl.flock` on POSIX. Falls back to an unlocked append if unavailable.
-    """
-    flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
-    fd = os.open(path, flags, 0o644)
-    try:
-        try:
-            import fcntl  # POSIX-only
-
-            fcntl.flock(fd, fcntl.LOCK_EX)
-        except Exception:
-            # Non-POSIX or locking failure: proceed without a lock (best-effort).
-            pass
-
-        os.write(fd, line.encode("utf-8"))
-        os.fsync(fd)
-    finally:
-        try:
-            os.close(fd)
-        except OSError:
-            pass
+    append_text_locked(path, line)
 
 
 def _normalize_json_value(value: Any, *, _depth: int = 0) -> Any:

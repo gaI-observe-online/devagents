@@ -8,16 +8,41 @@ This repository contains:
 
 ## Quick start
 
-### 1) Run the local observability stack (optional, free)
+### 1) One-click local run (golden path)
 
 ```bash
-docker compose up -d
+cp .env.example .env
+make up
+```
+
+Verify:
+
+```bash
+make verify
+```
+
+Stop:
+
+```bash
+make down
+```
+
+Reset local runtime state:
+
+```bash
+make reset
+```
+
+### 2) Run the local observability stack (optional, free)
+
+```bash
+make obs-up
 ```
 
 Grafana: `http://localhost:3000`  
 OTLP HTTP endpoint: `http://localhost:4318`
 
-### 2) Run the GADOS control plane dashboard
+### 3) Run the GADOS control plane dashboard (manual)
 
 ```bash
 python3 -m venv .venv

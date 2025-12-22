@@ -8,6 +8,7 @@ from typing import Iterable
 import yaml
 
 from .paths import ProjectPaths, safe_resolve_under
+from gados_common.fileio import append_text_locked
 
 
 @dataclass(frozen=True)
@@ -51,12 +52,7 @@ def write_text(paths: ProjectPaths, rel_path: str, content: str) -> None:
 
 def append_text(paths: ProjectPaths, rel_path: str, content: str) -> None:
     p = safe_resolve_under(paths.gados_root, rel_path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    if not p.exists():
-        p.write_text(content, encoding="utf-8")
-        return
-    with p.open("a", encoding="utf-8") as f:
-        f.write(content)
+    append_text_locked(p, content)
 
 
 def load_yaml(paths: ProjectPaths, rel_path: str) -> dict:

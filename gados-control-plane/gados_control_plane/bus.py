@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from .paths import get_paths
+from gados_common.fileio import append_text_locked
 
 
 Severity = Literal["INFO", "WARN", "ERROR", "CRITICAL"]
@@ -83,9 +84,8 @@ def _init_db() -> None:
 
 def _append_audit(event: dict[str, Any]) -> None:
     _ensure_dirs()
-    line = json.dumps(event, separators=(",", ":"), ensure_ascii=False)
-    with _audit_log_path().open("a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    line = json.dumps(event, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+    append_text_locked(_audit_log_path(), line + "\n")
 
 
 @dataclass(frozen=True)

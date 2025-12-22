@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.request import Request, urlopen
 
+from gados_common.fileio import append_text_locked
+
 
 Severity = Literal["INFO", "WARN", "ERROR", "CRITICAL"]
 
@@ -74,8 +76,10 @@ def dispatch_notification(n: Notification) -> dict[str, Any]:
     doc = n.to_dict()
 
     # Always queue (append-only)
-    with _queue_path().open("a", encoding="utf-8") as f:
-        f.write(json.dumps(doc, separators=(",", ":"), ensure_ascii=False) + "\n")
+    append_text_locked(
+        _queue_path(),
+        json.dumps(doc, separators=(",", ":"), ensure_ascii=False, sort_keys=True) + "\n",
+    )
 
     sent = False
     webhook_url = os.getenv("GADOS_WEBHOOK_URL", "").strip()

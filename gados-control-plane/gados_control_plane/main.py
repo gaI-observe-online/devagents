@@ -4,6 +4,8 @@ import asyncio
 import os
 import secrets
 import uuid
+import time
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.cors import CORSMiddleware
 
 from .agents_langgraph import run_daily_digest
 from .bus import ack_message, list_inbox, send_message
@@ -58,8 +61,87 @@ def _utc_now() -> str:
 def _auth_enabled() -> bool:
     return bool(os.getenv("GADOS_BASIC_AUTH_USER")) and bool(os.getenv("GADOS_BASIC_AUTH_PASSWORD"))
 
+def _max_request_bytes() -> int:
+    try:
+        return int(os.getenv("GADOS_MAX_REQUEST_BYTES", "1048576"))
+    except Exception:
+        return 1048576
 
-def require_write_auth(credentials: HTTPBasicCredentials | None = Depends(basic_auth)) -> str:
+def _cors_allow_origins() -> list[str]:
+    raw = os.getenv("GADOS_CORS_ALLOW_ORIGINS", "").strip()
+    if not raw:
+        return []
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+# CORS is explicit (empty => no CORS headers)
+_origins = _cors_allow_origins()
+if _origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+        max_age=600,
+    )
+
+
+# Basic request size cap (best-effort via Content-Length)
+@app.middleware("http")
+async def request_size_middleware(request: Request, call_next):
+    max_bytes = _max_request_bytes()
+    cl = request.headers.get("content-length")
+    if cl:
+        try:
+            if int(cl) > max_bytes:
+                raise HTTPException(status_code=413, detail="Request too large")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid Content-Length")
+    return await call_next(request)
+
+
+# Simple per-process token-bucket rate limit (good enough for beta)
+_rl_lock = threading.Lock()
+_rl_state: dict[str, tuple[float, float]] = {}  # ip -> (tokens, last_ts)
+
+def _rate_limit_params() -> tuple[float, float]:
+    try:
+        rps = float(os.getenv("GADOS_RATE_LIMIT_RPS", "10"))
+    except Exception:
+        rps = 10.0
+    try:
+        burst = float(os.getenv("GADOS_RATE_LIMIT_BURST", "20"))
+    except Exception:
+        burst = 20.0
+    return max(0.1, rps), max(1.0, burst)
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    rps, burst = _rate_limit_params()
+    now = time.monotonic()
+    ip = (request.client.host if request.client else "unknown")
+    with _rl_lock:
+        tokens, last = _rl_state.get(ip, (burst, now))
+        # Refill
+        tokens = min(burst, tokens + (now - last) * rps)
+        if tokens < 1.0:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        tokens -= 1.0
+        _rl_state[ip] = (tokens, now)
+        # Best-effort pruning
+        if len(_rl_state) > 5000:
+            cutoff = now - 600.0
+            for k, (_t, ts) in list(_rl_state.items()):
+                if ts < cutoff:
+                    _rl_state.pop(k, None)
+    return await call_next(request)
+
+
+def require_write_auth(
+    request: Request,
+    credentials: HTTPBasicCredentials | None = Depends(basic_auth),
+) -> str:
     """
     MVP access control for write endpoints.
 
@@ -69,6 +151,10 @@ def require_write_auth(credentials: HTTPBasicCredentials | None = Depends(basic_
     if not _auth_enabled():
         return "anonymous"
     if credentials is None:
+        _log.warning(
+            "auth_missing",
+            extra={"path": str(request.url.path), "client_ip": request.client.host if request.client else None},
+        )
         raise HTTPException(status_code=401, detail="Authentication required", headers={"WWW-Authenticate": "Basic"})
 
     expected_user = os.getenv("GADOS_BASIC_AUTH_USER", "")
@@ -76,6 +162,14 @@ def require_write_auth(credentials: HTTPBasicCredentials | None = Depends(basic_
     user_ok = secrets.compare_digest(credentials.username, expected_user)
     pass_ok = secrets.compare_digest(credentials.password, expected_pass)
     if not (user_ok and pass_ok):
+        _log.warning(
+            "auth_failed",
+            extra={
+                "path": str(request.url.path),
+                "client_ip": request.client.host if request.client else None,
+                "username": credentials.username,
+            },
+        )
         raise HTTPException(status_code=401, detail="Invalid credentials", headers={"WWW-Authenticate": "Basic"})
     return credentials.username
 
