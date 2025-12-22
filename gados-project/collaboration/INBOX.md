@@ -83,3 +83,17 @@ The QA evidence template was updated to include ACs for pipeline stages, policy 
 
 - `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
 
+#### 2025-12-22 — To: Merge agent / New QA agent
+
+**Subject**: QA evidence completed (static/unit/validator/notifications) + new reports
+
+**Body**:
+
+QA evidence has been updated with fresh verbatim outputs and new reports were added:
+
+- Updated: `gados-project/verification/BETA-QA-evidence.md` (includes notifications digest flush evidence)
+- Added: `gados-project/log/reports/BETA-QA-regression-20251222.md`
+- Added: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+
+Docker/integration remains BLOCKED on this runner (no Docker). CI `integration` job is the recommended source of Docker smoke evidence.
+
