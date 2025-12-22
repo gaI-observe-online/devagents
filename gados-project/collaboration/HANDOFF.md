@@ -73,3 +73,25 @@ Append new handoffs at the bottom. Do not rewrite history.
 **Notes / follow-ups**
 - Record any BLOCKED items explicitly in the evidence package (e.g., “no Docker on host”).
 
+---
+
+**Date (UTC)**: 2025-12-22  
+**From**: Coordination Agent (Control Plane)  
+**To**: Release owner / Human Authority  
+**Scope**: Beta readiness — workflow gates enforcement + QA evidence refresh
+
+**Artifacts/Code delivered**
+- Workflow-gates enforcement: `gados-control-plane/gados_control_plane/validator.py`
+- Validator unit tests: `gados-control-plane/tests/test_validator_workflow_gates.py`
+- QA evidence (filled): `gados-project/verification/BETA-QA-evidence.md`
+- Digest evidence: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+
+**Verification**
+- ruff: PASS (`python -m ruff check .`)
+- pytest: PASS (`python -m pytest -q`) — `17 passed, 3 skipped`
+- validator: PASS (`python gados-control-plane/scripts/validate_artifacts.py`)
+- docker smoke: NOT REQUIRED for beta (explicitly waived)
+
+**Notes / follow-ups**
+- QA regression plan updates to be appended in collaboration hub as they progress.
+

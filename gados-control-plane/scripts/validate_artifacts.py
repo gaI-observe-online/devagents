@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
-from gados_control_plane.paths import get_paths
-from gados_control_plane.validator import format_text_report, validate
+# Ensure repo root is on sys.path so `gados_common` imports work when this
+# script is executed from its subdirectory (CI runs `python gados-control-plane/scripts/...`).
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from gados_control_plane.paths import get_paths  # noqa: E402
+from gados_control_plane.validator import format_text_report, validate  # noqa: E402
 
 
 def main() -> int:

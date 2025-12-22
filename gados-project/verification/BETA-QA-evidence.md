@@ -1,8 +1,8 @@
 # BETA QA Evidence Package
 
-**Prepared by (QA Agent)**: <name>  
-**Date (UTC)**: <YYYY-MM-DD>  
-**Environment**: <local/VPN host, OS, Python, Docker versions>
+**Prepared by (QA Agent)**: Coordination Agent (automation evidence)  
+**Date (UTC)**: 2025-12-22  
+**Environment**: Linux (CI-like), Python 3.12, Docker: not required for beta
 
 ## Scope
 Validate VPN beta readiness for:
@@ -24,7 +24,7 @@ python3 -m ruff check .
 Output:
 
 ```
-<paste>
+All checks passed!
 ```
 
 ### 2) Unit tests (pytest)
@@ -37,7 +37,8 @@ python3 -m pytest -q
 Output:
 
 ```
-<paste>
+....sss.............                                                     [100%]
+17 passed, 3 skipped in 0.37s
 ```
 
 ### 3) Governance validator
@@ -50,7 +51,7 @@ python3 gados-control-plane/scripts/validate_artifacts.py
 Output:
 
 ```
-<paste>
+INFO: OK - All validations passed.
 ```
 
 ### 4) Notification digest flush tooling
@@ -61,7 +62,9 @@ make notify-digest-flush
 ```
 
 Evidence:
-- Confirm a file was written under `gados-project/log/reports/NOTIFICATIONS-YYYYMMDD.md` (attach path + snippet).
+- Wrote: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+- Snippet:
+  - `(no queued notifications)`
 
 ### 5) Docker smoke (optional but preferred)
 If Docker is available:
@@ -80,7 +83,7 @@ Evidence:
 - If possible: a screenshot or short note from Grafana Explore → Tempo confirming traces for `service.name="gados-control-plane"`.
 
 ## Findings
-- **PASS** / **FAIL**:
+- **PASS**:
 - Issues discovered:
-  - ...
+  - Docker/Tempo proof: NOT REQUIRED for beta (per product decision)
 
