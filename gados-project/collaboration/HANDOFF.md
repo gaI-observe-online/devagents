@@ -243,3 +243,14 @@ Add a unit test that:
     - `POST /track` returns `{"accepted": true}`
   - Sanity-checks `docker-compose.yml` text includes expected image/ports (`3000:3000`, `4318:4318`)
 
+#### 2025-12-22 — QA GO (beta) decision (from this agent)
+
+- **Decision**: GO (beta)
+- **Basis (evidence)**:
+  - `gados-project/verification/BETA-QA-evidence.md` (verbatim outputs; Docker marked BLOCKED; no-Docker alternative executed)
+  - `gados-project/log/reports/BETA-QA-regression-20251222.md`
+  - `gados-project/log/reports/NOTIFICATIONS-20251222.md`
+  - `gados-project/collaboration/QA_AUDIT.md`
+- **Conditions / remaining**:
+  - Docker/Tempo proof should be captured via CI `integration` job logs or on a Docker-capable runner if required for audit pack completeness.
+

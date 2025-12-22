@@ -30,6 +30,11 @@ Last updated: 2025-12-22 (QA evidence completed)
   - **BLOCKED (local docker)**: Docker integration steps (Docker not installed in this environment)
   - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
 
+### QA decision (beta)
+
+- **GO (from QA)**: Yes — based on passing static/unit/validator/notifications checks and the no-Docker smoke alternative, with Docker integration evidence sourced from CI.
+- **Remaining**: optional Docker/Tempo proof capture on a Docker-capable host (if required for audit pack completeness).
+
 ### Progress update (2025-12-22)
 
 - Added regression planning artifacts (pipeline stages + policy gates + evidence pack checklist).
