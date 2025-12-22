@@ -62,8 +62,8 @@ All checks passed!
 
 ```bash
 python3 -m pytest -q
-.................                                                        [100%]
-17 passed in 0.51s
+...................                                                      [100%]
+19 passed in 1.53s
 ```
 
 ```bash

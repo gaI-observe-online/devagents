@@ -26,7 +26,8 @@ Last updated: 2025-12-22 (QA evidence completed)
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
   - **PASS**: notifications digest flush (see `NOTIFICATIONS-20251222.md`)
-  - **BLOCKED (local)**: Docker integration steps (Docker not installed in this environment)
+  - **PARTIAL (local alt)**: no-Docker smoke covers `/health` + `/track` and compose port sanity (see `tests/test_integration_nodocker_smoke.py`)
+  - **BLOCKED (local docker)**: Docker integration steps (Docker not installed in this environment)
   - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
 
 ### Progress update (2025-12-22)

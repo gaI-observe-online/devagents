@@ -234,3 +234,12 @@ Add a unit test that:
   - PASS: `ruff`, `pytest`, `validate_artifacts.py`, notifications digest flush
   - BLOCKED: Docker integration (no Docker on this runner)
 
+#### 2025-12-22 — Alternative tests for Docker-blocked items
+
+- **Why**: Docker/Grafana/Tempo checks are blocked on some runners; provide a best-effort local alternative.
+- **Added tests**: `tests/test_integration_nodocker_smoke.py`
+  - Starts the API locally with `OTEL_SDK_DISABLED=true`, verifies:
+    - `GET /health` returns `{"status":"ok"}`
+    - `POST /track` returns `{"accepted": true}`
+  - Sanity-checks `docker-compose.yml` text includes expected image/ports (`3000:3000`, `4318:4318`)
+
