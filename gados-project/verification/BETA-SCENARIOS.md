@@ -3,6 +3,10 @@
 This file turns the 5 beta scenarios into **run steps + evidence capture requirements**.  
 For each scenario, record results in `gados-project/verification/BETA-QA-evidence.md` (or link a dedicated file under `gados-project/verification/`).
 
+Swimlane summary reference:
+
+- `gados-project/verification/EXPECTATION-VS-REALITY.md`
+
 ---
 
 ## Scenario 1 — Daily Spend Guardrail (Economics Control)

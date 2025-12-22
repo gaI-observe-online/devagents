@@ -151,3 +151,9 @@ Each scenario must produce **inputs → expectations → evidence** and include 
    - Expect: same inputs → same findings/decision
    - Evidence: two run IDs with identical findings register hash (or identical content)
 
+---
+
+## Swimlane reference (expectation vs reality)
+
+- `gados-project/verification/EXPECTATION-VS-REALITY.md`
+

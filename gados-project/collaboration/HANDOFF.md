@@ -259,3 +259,8 @@ Add a unit test that:
 - **Added**: `gados-project/verification/BETA-SCENARIOS.md`
 - **Purpose**: give QA/agents a single, authoritative “inputs → expectations → evidence” checklist per beta scenario (1–5), including current implementation status notes.
 
+#### 2025-12-22 — Swimlane scope added (Expectation vs Reality)
+
+- **Added**: `gados-project/verification/EXPECTATION-VS-REALITY.md`
+- **Purpose**: provide swimlane flow tables for scenarios 1–5 to align QA/engineering/reviewers on expected behavior.
+
