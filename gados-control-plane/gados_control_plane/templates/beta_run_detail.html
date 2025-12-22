@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Run Detail</h2>
+    <p class="muted"><code>{{ run_id }}</code></p>
+  </hgroup>
+
+  <article>
+    <header><strong>Decision</strong></header>
+    <p><span class="pill">{{ run.recommendation }}</span></p>
+    {% if run.pm_blockers and run.pm_blockers|length > 0 %}
+      <h4>Summary (PM language)</h4>
+      <ul>
+        {% for b in run.pm_blockers %}
+          <li><strong>{{ b.owner }}</strong>: {{ b.pm_summary }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No blockers detected by automated gates.</p>
+    {% endif %}
+
+    {% if override_required %}
+      <h4>Required next action</h4>
+      <p><strong>Release blocked.</strong> Either fix the issue(s) and re-run, or provide explicit Human Authority sign-off.</p>
+      {% if override_rel %}
+        <p class="muted">Override artifact: <code>{{ override_rel }}</code></p>
+        <p><a href="/view?path={{ override_rel }}">View/create override artifact path</a></p>
+      {% endif %}
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Top 3 findings</strong></header>
+    {% if run.top_findings and run.top_findings|length > 0 %}
+      <ol>
+        {% for f in run.top_findings %}
+          <li>
+            <strong>{{ f.severity }}</strong> — {{ f.title }}
+            <span class="muted">({{ f.tool }}{% if f.file %} · {{ f.file }}{% endif %}{% if f.line %}:{{ f.line }}{% endif %})</span>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="muted">No findings recorded.</p>
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Evidence pack</strong></header>
+    <ul>
+      <li><a href="/view?path={{ pack_index_rel }}">Review pack index</a> <span class="muted">(<code>{{ pack_index_rel }}</code>)</span></li>
+      <li><a href="/view?path={{ exec_summary_rel }}">Executive summary</a></li>
+      <li><a href="/view?path={{ findings_rel }}">Findings.csv</a></li>
+      <li><a href="/view?path={{ sums_rel }}">SHA256SUMS (immutability)</a></li>
+      <li><a href="/view?path={{ decision_rel }}">Decision artifact (human-readable)</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <header><strong>Run metadata</strong></header>
+    <pre><code>{{ run | tojson(indent=2) }}</code></pre>
+  </article>
+{% endblock %}
+

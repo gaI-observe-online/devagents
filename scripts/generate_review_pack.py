@@ -530,7 +530,7 @@ def main() -> int:
         lines.append(f"# {run_id}: Code Review Factory decision")
         lines.append("")
         lines.append(f"**Generated (UTC)**: {_utc_now_iso()}")
-        lines.append(f"**Scenario**: code-review-factory")
+        lines.append("**Scenario**: code-review-factory")
         if pr:
             lines.append(f"**PR**: `{pr}`")
         if sha:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import secrets
 import uuid
@@ -74,6 +75,50 @@ def _cors_allow_origins() -> list[str]:
     if not raw:
         return []
     return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+def _safe_read_json(path: Path) -> dict:
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        return obj if isinstance(obj, dict) else {}
+    except Exception:
+        return {}
+
+
+def _strip_gados_prefix(rel: str) -> str:
+    # Many artifacts store repo-root-relative paths like "gados-project/<...>".
+    rel = (rel or "").strip()
+    return rel.removeprefix("gados-project/") if rel.startswith("gados-project/") else rel
+
+
+def _list_review_runs(paths) -> list[dict]:
+    """
+    Scenario 4: code review factory runs.
+    Run folders live at: gados-project/log/reports/review-runs/REVIEW-*/run.json
+    """
+    root = paths.gados_root / "log" / "reports" / "review-runs"
+    runs: list[dict] = []
+    if not root.exists():
+        return runs
+    for run_dir in sorted([p for p in root.iterdir() if p.is_dir()], reverse=True):
+        meta_path = run_dir / "run.json"
+        if not meta_path.exists():
+            continue
+        meta = _safe_read_json(meta_path)
+        run_id = str(meta.get("run_id") or run_dir.name)
+        scenario = str(meta.get("scenario") or "code-review-factory")
+        decision = str(meta.get("recommendation") or "UNKNOWN")
+        ts = str(meta.get("generated_at_utc") or "")
+        runs.append(
+            {
+                "run_id": run_id,
+                "scenario": scenario,
+                "decision": decision,
+                "generated_at_utc": ts,
+                "detail_url": f"/beta/runs/{run_id}",
+            }
+        )
+    return runs
 
 
 # CORS is explicit (empty => no CORS headers)
@@ -471,6 +516,50 @@ def reports(request: Request) -> HTMLResponse:
                 }
             )
     return templates.TemplateResponse("reports.html", {"request": request, "reports": reports_list})
+
+
+@app.get("/beta/runs", response_class=HTMLResponse)
+def beta_runs(request: Request) -> HTMLResponse:
+    """
+    Read-only decision UI for beta scenarios (PM-friendly).
+    """
+    paths = get_paths()
+    runs = _list_review_runs(paths)
+    return templates.TemplateResponse("beta_runs.html", {"request": request, "runs": runs})
+
+
+@app.get("/beta/runs/{run_id}", response_class=HTMLResponse)
+def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
+    paths = get_paths()
+    run_dir = paths.gados_root / "log" / "reports" / "review-runs" / run_id
+    meta = _safe_read_json(run_dir / "run.json")
+    if not meta:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    decision_rel = f"decision/{run_id}.md"
+    pack_index_rel = f"log/reports/review-runs/{run_id}/REVIEW_PACK.md"
+    exec_summary_rel = f"log/reports/review-runs/{run_id}/Executive_Summary.md"
+    findings_rel = f"log/reports/review-runs/{run_id}/Findings.csv"
+    sums_rel = f"log/reports/review-runs/{run_id}/SHA256SUMS.txt"
+
+    override_art = _strip_gados_prefix(str(meta.get("override_artifact") or ""))
+    override_required = bool(meta.get("override_required"))
+
+    return templates.TemplateResponse(
+        "beta_run_detail.html",
+        {
+            "request": request,
+            "run": meta,
+            "run_id": run_id,
+            "decision_rel": decision_rel,
+            "pack_index_rel": pack_index_rel,
+            "exec_summary_rel": exec_summary_rel,
+            "findings_rel": findings_rel,
+            "sums_rel": sums_rel,
+            "override_required": override_required,
+            "override_rel": override_art,
+        },
+    )
 
 
 @app.post("/agents/run/daily-digest")
