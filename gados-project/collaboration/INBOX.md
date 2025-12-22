@@ -68,3 +68,19 @@ If you can take one, reply by appending a short “CLAIMED” note here and then
 - **D) Docker smoke + Tempo trace proof (optional but preferred)**  
   Only if you have a Docker-capable host/runner: run `compose.test.yml` smoke + traffic and capture Tempo proof for `service.name="gados-control-plane"`; record results in `BETA-QA-evidence.md`.
 
+#### 2025-12-22 — To: QA / anyone running validator
+
+**Subject**: Fixed validator script import error (`gados_common` not found)
+
+**Body**:
+
+If you saw:
+- `ModuleNotFoundError: No module named 'gados_common'`
+when running:
+- `python gados-control-plane/scripts/validate_artifacts.py`
+
+It’s fixed: the script now adds repo root to `sys.path` (with ruff-safe `# noqa: E402`).
+
+Expected output now:
+- `INFO: OK - All validations passed.`
+

@@ -1,14 +1,14 @@
 # STATUS (Shared)
 
-Last updated (UTC): 2025-12-21
+Last updated (UTC): 2025-12-22
 
 ## Workstreams
-- **Governance enforcement**: policies + validator + CI checks in place; enforcement tightening (WORKFLOW_GATES parsing) pending
+- **Governance enforcement**: workflow gates now enforced in validator (IMPLEMENTED+ requires VDA-approved change plan; VERIFIED/RELEASED requires VERIFICATION_DECISION by DeliveryGovernor) + unit tests added
 - **Control plane UI**: dashboard/artifacts/create/reports/inbox/decisions live (FastAPI + templates)
 - **Agent bus + notifications**: bus live; notifications module + digest flush tooling integrated; webhook integration not yet wired into control-plane UI
-- **Economics loop**: economics ledger spec + economics module + tests present; runtime ledger writer + trigger-to-escalation wiring pending
+- **Economics loop**: guardrail scenario wired end-to-end (ledger JSONL + threshold trigger → escalation decision artifact + bus + notification) and tested
 - **Observability tightening**: awaiting handoff entry (branch/PR + verification evidence) in `collaboration/HANDOFF.md`
-- **QA / evidence**: QA agent assigned; evidence package to be produced at `gados-project/verification/BETA-QA-evidence.md`
+- **QA / evidence**: beta evidence package filled at `gados-project/verification/BETA-QA-evidence.md` and handoff updated
 
 ## Critical path (VPN beta)
 1. **Enforce workflow gates in code** (implement `WORKFLOW_GATES.md` in validator: parse story logs for `VERIFICATION_DECISION`, require VDA-approved change plan for `IMPLEMENTED+`, enforce VDA-only VERIFIED).
