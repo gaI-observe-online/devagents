@@ -15,6 +15,7 @@ Last updated: 2025-12-21
 - **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
 - **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
 - **QA audit evidence**: `gados-project/collaboration/QA_AUDIT.md` (PASS + controlled FAIL examples)
+- **Collab inbox**: `gados-project/collaboration/INBOX.md` (async messages for other agents)
 - **Integration code review notes**: `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry)
 - **Latest results**:
   - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`

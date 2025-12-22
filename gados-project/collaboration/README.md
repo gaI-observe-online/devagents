@@ -7,6 +7,7 @@ This folder is the **single shared place** for coordination across humans and ag
 - **Current status** (what’s in progress, blocked, done): `STATUS.md`
 - **Handoffs** between agents/reviewers: `HANDOFF.md`
 - **Decisions log** (audit-friendly): `DECISIONS.md`
+- **Async messages** when DM isn’t possible: `INBOX.md`
 
 ### Update rules (keep merges clean)
 
