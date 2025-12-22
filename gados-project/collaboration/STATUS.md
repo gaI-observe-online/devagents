@@ -26,4 +26,5 @@ Last updated: 2025-12-21
 
 - **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down` and Grafana/Tempo checks.
 - **Pending merge (critical path hardening)**: see `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry); files: `.github/workflows/blank.yml`, `Makefile`, `app/main.py`
+- **Workflow name ambiguity**: there are two workflows named `CI` (`blank.yml` and `ci.yml`); use `--workflow blank.yml` or `--workflow ci.yml` when querying runs.
 

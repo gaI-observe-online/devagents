@@ -71,6 +71,17 @@ python3 gados-control-plane/scripts/validate_artifacts.py
 artifact_validation=PASS
 ```
 
+### CI evidence (GitHub Actions)
+
+Most recent successful workflow runs observed:
+
+- PR #2 / `cursor/system-status-retrieval-bd2b` (`blank.yml`):
+  - `gh run list --workflow blank.yml --branch cursor/system-status-retrieval-bd2b --limit 1`
+  - Example run ID: `20407067806` (completed success)
+- PR #1 / `cursor/gados-strategic-game-plan-58a6` (`ci.yml`):
+  - `gh run list --workflow ci.yml --branch cursor/gados-strategic-game-plan-58a6 --limit 1`
+  - Example run ID: `20407091818` (completed success)
+
 ### Docker / integration (attempted in this environment)
 
 ```bash
