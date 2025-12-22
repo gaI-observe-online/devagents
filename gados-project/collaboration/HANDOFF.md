@@ -116,3 +116,32 @@ Next steps:
   - QA artifacts present (`gados-project/verification/BETA-QA-evidence.md`, `gados-project/log/reports/BETA-QA-regression-20251221.md`, `gados-project/collaboration/QA_AUDIT.md`)
   - CI includes `test` + `integration` jobs; integration is Docker-based and runs in GitHub Actions
 
+#### 2025-12-21 — Health checks quickstart (for new agent)
+
+- **Goal**: run the minimum “is it healthy?” checks and know where to look when blocked.
+
+Local (no Docker required):
+
+- `python3 -m ruff check .`
+- `python3 -m pytest -q`
+- `python3 gados-control-plane/scripts/validate_artifacts.py` (expect `artifact_validation=PASS`)
+
+Docker/integration (requires Docker-capable machine):
+
+- `make test-env-up`
+- `make test-smoke` (checks Grafana `:3000` and service `:8000`)
+- `make test-env-down`
+
+CI inspection (avoid workflow ambiguity by using file name):
+
+- PR #2 / branch `cursor/system-status-retrieval-bd2b`:
+  - `gh run list --workflow blank.yml --branch cursor/system-status-retrieval-bd2b --limit 5`
+  - `gh run view <run_id> --log`
+- PR #1 / branch `cursor/gados-strategic-game-plan-58a6`:
+  - `gh run list --workflow ci.yml --branch cursor/gados-strategic-game-plan-58a6 --limit 5`
+  - `gh run view <run_id> --log`
+
+If blocked:
+
+- No Docker available → run integration in CI (integration job) and mark local as BLOCKED with reason in QA evidence.
+

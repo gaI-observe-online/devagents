@@ -35,3 +35,20 @@ CI runs:
 
 Note: some environments can’t run Docker locally; integration smoke runs in CI (`integration` job).
 
+#### 2025-12-21 — To: New QA / Merge agent
+
+**Subject**: Health checks quickstart + where to find evidence
+
+**Body**:
+
+- Run local gates:
+  - `python3 -m ruff check .`
+  - `python3 -m pytest -q`
+  - `python3 gados-control-plane/scripts/validate_artifacts.py`
+- Docker/integration (Docker machine): `make test-env-up && make test-smoke && make test-env-down`
+- Evidence locations:
+  - QA: `gados-project/verification/BETA-QA-evidence.md`
+  - Regression: `gados-project/log/reports/BETA-QA-regression-20251221.md`
+  - Audit patterns: `gados-project/collaboration/QA_AUDIT.md`
+  - Status/Handoff: `gados-project/collaboration/STATUS.md` + `HANDOFF.md`
+
