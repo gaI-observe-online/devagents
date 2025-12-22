@@ -10,6 +10,10 @@ This folder contains **strategic epic plans** (`EPIC-###.md`).
 ## Start here
 Use `/gados-project/templates/EPIC.template.md`.
 
+## Beta docs
+- Runbook: `BETA_RUNBOOK.md`
+- Scope freeze + acceptance gates: `BETA_SCOPE.md`
+
 ## Strategic game plan (HTML)
 For a shareable, polished single-page view, see:
 - `GADOS-STRATEGIC-GAME-PLAN.html`
