@@ -145,3 +145,58 @@ If blocked:
 
 - No Docker available → run integration in CI (integration job) and mark local as BLOCKED with reason in QA evidence.
 
+#### 2025-12-22 — Advisory: implement beta blockers A (workflow gates) + B (economics wiring)
+
+This note is intended for the new agent working on branch `cursor/gados-game-plan-agent-replacement-3913`.
+
+##### A) Validator workflow gates — recommended implementation
+
+Target: `gados-control-plane/gados_control_plane/validator.py`
+
+- **For IMPLEMENTED+** (status contains `IMPLEMENTED`, `VALIDATED`, `VERIFIED`, `RELEASED`):
+  - Require at least one change plan in `gados-project/plan/changes/` matching `CHANGE-###-*.yaml`
+    - where `###` equals the story number from `STORY-###.md`
+  - Parse the YAML (PyYAML is already a dependency) and require:
+    - `approvals.vda.approved: true`
+- **For VERIFIED/RELEASED**:
+  - Require `gados-project/log/STORY-###.log.yaml` exists
+  - Parse YAML and require an event (or top-level section, depending on chosen schema) with:
+    - `type: VERIFICATION_DECISION`
+    - `decision: VERIFIED`
+    - `actor_role: DeliveryGovernor`
+
+##### A) Tests (unit)
+
+Add `gados-control-plane/tests/test_validator_workflow_gates.py`:
+
+- Use `tmp_path` to construct a minimal `gados-project/` tree.
+- Create the validator’s “required baseline artifacts” as empty files to keep tests focused.
+- Create a story `plan/stories/STORY-001.md` with `**Status**: IMPLEMENTED` (or VERIFIED).
+- Create change plan file `plan/changes/CHANGE-001-FOO.yaml` with approvals set true/false.
+- Create log file `log/STORY-001.log.yaml` with/without `VERIFICATION_DECISION` event.
+- Assert that `validate(paths)` produces:
+  - **ERROR** when missing/invalid
+  - no ERROR when valid
+
+##### B) Economics trigger → actions wiring — recommended minimal path
+
+Target: introduce a small function (new module is fine) that, when `build_budget_trigger_event(...)` returns non-None:
+
+- Append a ledger entry line to `gados-project/log/economics/ledger.jsonl`
+- Render a markdown escalation file:
+  - `gados-project/decision/ESCALATION-<correlation_or_story>.md`
+  - using template `gados-project/templates/ESCALATION.template.md`
+- Send a bus/inbox message via `gados_control_plane.bus.send_message(...)`:
+  - `type="economics.budget_threshold"`
+  - `severity="CRITICAL"` for `HARD_STOP|CRITICAL`, else `WARN`
+  - include artifact refs to the ledger + escalation decision doc
+
+##### B) Tests (unit)
+
+Add a unit test that:
+
+- Creates entries that exceed budget (CRITICAL/HARD_STOP) and confirms:
+  - ledger file appended
+  - escalation doc created
+  - `send_message` called (monkeypatch) with expected severity/type
+

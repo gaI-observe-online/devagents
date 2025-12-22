@@ -8,6 +8,7 @@ Last updated: 2025-12-21 (health-check quickstart added; progress unchanged)
 |---|---|---|---|---|---|
 | Analytics + Observability starter kit | Agent | `cursor/system-status-retrieval-bd2b` / PR #2 | READY_TO_MERGE | Merge PR #2 after CI green | Docker integration is CI-only |
 | GADOS strategic plan | Agent | `cursor/gados-strategic-game-plan-58a6` / PR #1 | IN_PROGRESS | Review + reconcile docs | None |
+| New agent replacement (validator/economics wiring) | Agent | `cursor/gados-game-plan-agent-replacement-3913` | IN_PROGRESS | Implement workflow-gate enforcement + economics trigger wiring | See `HANDOFF.md` 2025-12-22 guidance |
 
 ### QA status (beta)
 

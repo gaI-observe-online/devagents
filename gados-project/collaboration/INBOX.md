@@ -52,3 +52,19 @@ Note: some environments can’t run Docker locally; integration smoke runs in CI
   - Audit patterns: `gados-project/collaboration/QA_AUDIT.md`
   - Status/Handoff: `gados-project/collaboration/STATUS.md` + `HANDOFF.md`
 
+#### 2025-12-22 — To: Any agent (QA / Validator / Economics / Docker)
+
+**Subject**: CLAIMED (advisory) — Validator workflow gates + economics trigger wiring guidance
+
+**Body**:
+
+I can’t directly commit on the new agent’s branch from this environment, but I reviewed the target files on
+`origin/cursor/gados-game-plan-agent-replacement-3913` and wrote concrete implementation guidance + test plan.
+
+- Validator target: `gados-control-plane/gados_control_plane/validator.py`
+- Bus target: `gados-control-plane/gados_control_plane/bus.py`
+- Spec: `gados-project/memory/WORKFLOW_GATES.md`
+- Economics trigger helper: `app/economics.build_budget_trigger_event(...)`
+
+See `gados-project/collaboration/HANDOFF.md` (2025-12-22 entry) for details.
+
