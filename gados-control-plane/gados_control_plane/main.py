@@ -17,6 +17,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 
 from .agents_langgraph import run_daily_digest
+from .beta_spend_guardrail import run_daily_spend_guardrail
 from .bus import ack_message, list_inbox, send_message
 from .artifacts import (
     append_text,
@@ -477,6 +478,32 @@ def run_agents_daily_digest(_user: str = Depends(require_write_auth)) -> Redirec
     out = run_daily_digest()
     rel = out.get("report_rel_path", "log/reports")
     return RedirectResponse(url=f"/view?path={rel}", status_code=303)
+
+
+@app.post("/agents/run/daily-spend-guardrail")
+def run_agents_daily_spend_guardrail(
+    budget_usd: str = Form("10.00"),
+    spend_steps: str = Form(""),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
+    paths = get_paths()
+    try:
+        budget = float(budget_usd)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid budget_usd")
+
+    steps: list[float] | None = None
+    if spend_steps.strip():
+        try:
+            steps = [float(x.strip()) for x in spend_steps.split(",") if x.strip()]
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid spend_steps")
+
+    out = run_daily_spend_guardrail(paths=paths, budget_usd=budget, spend_steps_usd=steps)
+    # Prefer showing the created escalation decision if any.
+    if out.escalation_rel_path:
+        return RedirectResponse(url=f"/view?path={out.escalation_rel_path}", status_code=303)
+    return RedirectResponse(url="/inbox?role=CoordinationAgent&agent_id=CA-1", status_code=303)
 
 
 @app.get("/inbox", response_class=HTMLResponse)

@@ -69,6 +69,25 @@
       </form>
       <p class="muted">Writes to <code>gados-project/plan/changes/</code>.</p>
     </article>
+
+    <article>
+      <header><strong>Beta scenario: Daily Spend Guardrail</strong></header>
+      <form method="post" action="/agents/run/daily-spend-guardrail">
+        <label>
+          Budget (USD)
+          <input name="budget_usd" type="number" step="0.01" value="10.00" required />
+        </label>
+        <label>
+          Spend steps (comma-separated USD)
+          <input name="spend_steps" placeholder="4,4,3" />
+        </label>
+        <button type="submit">Run guardrail</button>
+      </form>
+      <p class="muted">
+        Writes to <code>gados-project/log/economics/ledger.jsonl</code>, creates an <code>decision/ESCALATION-###.md</code>,
+        and emits a bus + notification event.
+      </p>
+    </article>
   </div>
 {% endblock %}
 
