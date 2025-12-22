@@ -42,6 +42,25 @@ def test_append_ledger_entry_writes_jsonl(tmp_path: Path):
     assert obj["labels"]["service"] == "gados-control-plane"
 
 
+def test_append_ledger_entry_coerces_non_json_labels(tmp_path: Path):
+    ledger_path = tmp_path / "ledger.jsonl"
+    entry = LedgerEntry(
+        correlation_id="intent_123",
+        run_id="ci_456",
+        producer="ci",
+        category="compute",
+        unit="seconds",
+        quantity=1.0,
+        unit_cost_usd=1.0,
+        labels={"bytes": b"\xff", "uuid": __import__("uuid").uuid4(), "nan": float("nan")},
+    )
+    append_ledger_entry(entry, path=str(ledger_path))
+    obj = json.loads(ledger_path.read_text(encoding="utf-8").strip())
+    assert isinstance(obj["labels"]["bytes"], str)
+    assert isinstance(obj["labels"]["uuid"], str)
+    assert obj["labels"]["nan"] is None
+
+
 def test_threshold_evaluation_defaults():
     assert evaluate_threshold(spend_usd=0.0, budget_usd=10.0) is None
     assert evaluate_threshold(spend_usd=6.99, budget_usd=10.0) is None

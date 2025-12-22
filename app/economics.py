@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import time
 import uuid
@@ -43,6 +44,8 @@ class LedgerEntry:
         d = asdict(self)
         d["schema"] = "economics.ledger.entry.v1"
         d["cost_usd"] = self.cost_usd()
+        # Ensure labels won't crash json.dumps at runtime and won't emit non-JSON values.
+        d["labels"] = _normalize_json_value(d.get("labels", {}))
         return d
 
 
@@ -52,9 +55,84 @@ def append_ledger_entry(entry: LedgerEntry, *, path: str) -> None:
     """
     record = entry.to_record()
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, separators=(",", ":"), sort_keys=True))
-        f.write("\n")
+
+    # One atomic append under an exclusive lock (best-effort on non-POSIX).
+    # We also flush + fsync for crash-consistency of the newly appended line.
+    line = json.dumps(record, separators=(",", ":"), sort_keys=True, allow_nan=False) + "\n"
+    _append_jsonl_locked(path, line)
+
+
+def _append_jsonl_locked(path: str, line: str) -> None:
+    """
+    Append `line` to `path` with best-effort cross-process locking.
+
+    Uses `fcntl.flock` on POSIX. Falls back to an unlocked append if unavailable.
+    """
+    flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+    fd = os.open(path, flags, 0o644)
+    try:
+        try:
+            import fcntl  # POSIX-only
+
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except Exception:
+            # Non-POSIX or locking failure: proceed without a lock (best-effort).
+            pass
+
+        os.write(fd, line.encode("utf-8"))
+        os.fsync(fd)
+    finally:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+
+
+def _normalize_json_value(value: Any, *, _depth: int = 0) -> Any:
+    """
+    Coerce values into JSON-safe primitives:
+    - dict/list/tuple -> recursively normalized
+    - uuid -> str
+    - bytes -> utf-8 (replace errors)
+    - floats -> if non-finite (NaN/Inf), coerce to None
+    - everything else -> str(value)
+    """
+    if _depth > 8:
+        return str(value)
+
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+
+    if isinstance(value, uuid.UUID):
+        return str(value)
+
+    # NOTE: avoid importing datetime at module import time; keep it lightweight.
+    if hasattr(value, "isoformat") and callable(getattr(value, "isoformat")):
+        # datetime/date-like objects
+        try:
+            return str(value.isoformat())
+        except Exception:
+            pass
+
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        try:
+            return bytes(value).decode("utf-8", errors="replace")
+        except Exception:
+            return str(value)
+
+    if isinstance(value, dict):
+        out: dict[str, Any] = {}
+        for k, v in value.items():
+            out[str(k)] = _normalize_json_value(v, _depth=_depth + 1)
+        return out
+
+    if isinstance(value, (list, tuple, set)):
+        return [_normalize_json_value(v, _depth=_depth + 1) for v in value]
+
+    return str(value)
 
 
 def total_spend_usd(entries: list[LedgerEntry]) -> float:
@@ -84,9 +162,15 @@ def evaluate_threshold(*, spend_usd: float, budget_usd: float) -> Threshold | No
     """
     Implements defaults from `gados-project/memory/ECONOMICS_LEDGER.md`.
     """
-    if budget_usd <= 0:
+    spend = float(spend_usd)
+    budget = float(budget_usd)
+    if not (math.isfinite(spend) and math.isfinite(budget)):
         return None
-    ratio = spend_usd / budget_usd
+    if budget <= 0:
+        return None
+    if spend < 0:
+        spend = 0.0
+    ratio = spend / budget
     if ratio >= 1.10:
         return "HARD_STOP"
     if ratio >= 1.00:
@@ -98,15 +182,25 @@ def evaluate_threshold(*, spend_usd: float, budget_usd: float) -> Threshold | No
     return None
 
 
-def budget_status(*, spend_usd: float, budget_usd: float) -> dict[str, float]:
-    if budget_usd <= 0:
-        return {"budget_usd": float(budget_usd), "spend_usd": float(spend_usd), "margin_usd": float("nan")}
-    return {
-        "budget_usd": float(budget_usd),
-        "spend_usd": float(spend_usd),
-        "margin_usd": float(budget_usd) - float(spend_usd),
-        "margin_pct": (float(budget_usd) - float(spend_usd)) / float(budget_usd),
-    }
+def budget_status(*, spend_usd: float, budget_usd: float) -> dict[str, float | None]:
+    """
+    JSON-safe budget facts (never emits NaN/Infinity).
+    """
+    spend = float(spend_usd)
+    budget = float(budget_usd)
+    if not (math.isfinite(spend) and math.isfinite(budget)):
+        return {"budget_usd": None, "spend_usd": None, "margin_usd": None, "margin_pct": None}
+    if spend < 0:
+        spend = 0.0
+    if budget <= 0:
+        return {"budget_usd": budget, "spend_usd": spend, "margin_usd": None, "margin_pct": None}
+
+    margin = budget - spend
+    margin_pct = margin / budget
+    # Guard against any future numeric drift (should already be finite here).
+    if not (math.isfinite(margin) and math.isfinite(margin_pct)):
+        return {"budget_usd": budget, "spend_usd": spend, "margin_usd": None, "margin_pct": None}
+    return {"budget_usd": budget, "spend_usd": spend, "margin_usd": margin, "margin_pct": margin_pct}
 
 
 def build_budget_trigger_event(

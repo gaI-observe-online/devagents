@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   unit:
     runs-on: ubuntu-latest
@@ -33,18 +36,19 @@ jobs:
 
       - name: Required docs present (audit-ready)
         run: |
-          test -f gados-project/strategy/ARCHITECTURE.md
-          test -f gados-project/strategy/RUNBOOKS.md
-          test -f gados-project/memory/NOTIFICATION_POLICY.md
-          test -f gados-project/memory/VERIFICATION_POLICY.md
-          test -f gados-project/memory/ARCH_DECISION_POLICY.md
-          test -f gados-project/memory/SECURITY_POLICY.md
-          test -f gados-project/memory/ECONOMICS_LEDGER.md
-          test -f gados-project/memory/WORKFLOW_GATES.md
+          test -s gados-project/strategy/ARCHITECTURE.md
+          test -s gados-project/strategy/RUNBOOKS.md
+          test -s gados-project/memory/NOTIFICATION_POLICY.md
+          test -s gados-project/memory/VERIFICATION_POLICY.md
+          test -s gados-project/memory/ARCH_DECISION_POLICY.md
+          test -s gados-project/memory/SECURITY_POLICY.md
+          test -s gados-project/memory/ECONOMICS_LEDGER.md
+          test -s gados-project/memory/WORKFLOW_GATES.md
 
   docker_smoke:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # Optional signal for PRs, but required on main branch pushes.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
 
