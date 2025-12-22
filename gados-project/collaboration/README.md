@@ -1,17 +1,16 @@
-## Collaboration hub (shared)
+# Collaboration Hub (repo-tracked)
 
-This folder is the **single shared place** for coordination across humans and agents.
+This folder is the **shared coordination hub** for all contributors (humans + agents).
 
-### Use this for
+## Rules (merge-clean)
+- Prefer **append-only** updates for logs (`HANDOFF.md`, `DECISIONS.md`).
+- Keep `STATUS.md` short and current (edit in place).
+- Every update should link to evidence artifacts where applicable (logs, verification packages, CI runs).
+- If it's not in an artifact, it doesn't exist.
 
-- **Current status** (what’s in progress, blocked, done): `STATUS.md`
-- **Handoffs** between agents/reviewers: `HANDOFF.md`
-- **Decisions log** (audit-friendly): `DECISIONS.md`
-- **Async messages** when DM isn’t possible: `INBOX.md`
-
-### Update rules (keep merges clean)
-
-- Prefer **append-only** entries (especially for decisions and daily logs).
-- When updating `STATUS.md`, only touch the sections you own (one intent/workstream per row).
-- Include a **date + owner + link** (PR/commit/file path) on every update.
+## Files
+- `STATUS.md`: shared status board (workstreams, blockers, QA snapshot)
+- `HANDOFF.md`: append-only handoff log (use the template inside)
+- `DECISIONS.md`: append-only decision log (audit-friendly)
+- `GUIDELINES.md`: collaboration rules + evidence standards + observability expectations
 

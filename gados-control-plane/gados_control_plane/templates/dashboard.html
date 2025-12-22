@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Dashboard</h2>
+    <p class="muted">Artifact-first delivery control plane (GUI).</p>
+  </hgroup>
+
+  <div class="grid">
+    <article>
+      <header><strong>Epics</strong></header>
+      <p><span class="pill">{{ epic_count }}</span> epic plan(s)</p>
+      <p><a href="/artifacts?dir=strategy">Browse epics</a></p>
+    </article>
+    <article>
+      <header><strong>Stories</strong></header>
+      <p><span class="pill">{{ story_count }}</span> story spec(s)</p>
+      <p><a href="/artifacts?dir=plan/stories">Browse stories</a></p>
+    </article>
+    <article>
+      <header><strong>Validation</strong></header>
+      <p><a href="/validate">Run governance checks</a></p>
+      <p class="muted">CI can use <code>/validate.txt</code>.</p>
+    </article>
+  </div>
+
+  <article>
+    <header><strong>Status distribution</strong></header>
+    {% if by_status %}
+      <ul>
+      {% for status, count in by_status.items() %}
+        <li><code>{{ status }}</code>: <strong>{{ count }}</strong></li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No stories yet. Create one from the templates.</p>
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Recent stories</strong></header>
+    {% if stories %}
+      <table role="grid">
+        <thead>
+          <tr><th>Story</th><th>Status</th><th>Link</th></tr>
+        </thead>
+        <tbody>
+          {% for s in stories %}
+            <tr>
+              <td><code>{{ s.id }}</code></td>
+              <td><span class="pill">{{ s.status }}</span></td>
+              <td><a href="/view?path={{ s.rel }}">open</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No stories to show.</p>
+    {% endif %}
+  </article>
+{% endblock %}
+
