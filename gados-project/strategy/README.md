@@ -13,6 +13,7 @@ Use `/gados-project/templates/EPIC.template.md`.
 ## Beta docs
 - Runbook: `BETA_RUNBOOK.md`
 - Scope freeze + acceptance gates: `BETA_SCOPE.md`
+- Release definition: `BETA_CONTRACT.md`
 
 ## Strategic game plan (HTML)
 For a shareable, polished single-page view, see:

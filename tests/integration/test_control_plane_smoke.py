@@ -32,7 +32,9 @@ def test_health_ok():
     _wait_for(f"{BASE}/health")
     r = httpx.get(f"{BASE}/health", timeout=5.0)
     assert r.status_code == 200
-    assert r.json().get("status") == "ok"
+    # Beta readiness schema: status is STARTING/READY (older builds used "ok").
+    status = r.json().get("status")
+    assert status in {"READY", "STARTING", "ok"}
 
 
 def test_root_ok():

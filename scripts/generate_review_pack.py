@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import os
 import subprocess
@@ -395,6 +396,19 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
+
+    # Optional immutability/traceability: write SHA256SUMS for the pack.
+    sums_path = out_dir / "SHA256SUMS.txt"
+    sums: list[str] = []
+    for p in sorted(out_dir.rglob("*")):
+        if p.is_dir():
+            continue
+        if p.name == "SHA256SUMS.txt":
+            continue
+        h = hashlib.sha256(p.read_bytes()).hexdigest()
+        rel = p.relative_to(out_dir)
+        sums.append(f"{h}  {rel}")
+    sums_path.write_text("\n".join(sums) + "\n", encoding="utf-8")
 
     print(f"Wrote review pack: {out_dir}")
     return 1 if blocked_reasons else 0
