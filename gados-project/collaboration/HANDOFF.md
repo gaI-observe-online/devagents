@@ -211,3 +211,14 @@ Add a unit test that:
     - policy gates (GO/NO-GO)
     - offline/zero-cost + deterministic behavior
 
+#### 2025-12-22 — Progress update (QA regression planning)
+
+- **Status**: COMPLETE (authored artifacts + wired into collab), pending merge
+- **Files added**:
+  - `gados-project/verification/BETA-REGRESSION-PLAN.md`
+  - `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
+- **Files updated**:
+  - `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
+  - `gados-project/collaboration/STATUS.md`
+  - `gados-project/collaboration/HANDOFF.md`
+

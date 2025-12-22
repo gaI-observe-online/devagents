@@ -1,6 +1,6 @@
 ## Shared status board
 
-Last updated: 2025-12-21 (health-check quickstart added; progress unchanged)
+Last updated: 2025-12-22 (regression scope expanded)
 
 ### Active PRs / branches
 
@@ -25,6 +25,12 @@ Last updated: 2025-12-21 (health-check quickstart added; progress unchanged)
   - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
   - **BLOCKED (local)**: Docker integration steps (Docker not installed in this environment)
   - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
+
+### Progress update (2025-12-22)
+
+- Added regression planning artifacts (pipeline stages + policy gates + evidence pack checklist).
+- Updated QA evidence template to include pipeline/policy/offline ACs and references.
+- Pending merge on this branch: new/updated files under `gados-project/verification/` and updated collab docs (see `HANDOFF.md` 2025-12-22 entry).
 
 ### Known blockers / gaps
 

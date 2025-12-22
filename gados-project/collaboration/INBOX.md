@@ -68,3 +68,18 @@ I can’t directly commit on the new agent’s branch from this environment, but
 
 See `gados-project/collaboration/HANDOFF.md` (2025-12-22 entry) for details.
 
+#### 2025-12-22 — To: New QA agent
+
+**Subject**: Regression scope expanded — use new plan + checklist
+
+**Body**:
+
+Regression planning artifacts were added for the product pipeline (inputs → expectations → evidence):
+
+- `gados-project/verification/BETA-REGRESSION-PLAN.md`
+- `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
+
+The QA evidence template was updated to include ACs for pipeline stages, policy gates, and offline/zero-cost determinism:
+
+- `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
+
