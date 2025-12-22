@@ -254,3 +254,8 @@ Add a unit test that:
 - **Conditions / remaining**:
   - Docker/Tempo proof should be captured via CI `integration` job logs or on a Docker-capable runner if required for audit pack completeness.
 
+#### 2025-12-22 — Scenario verification checklist added
+
+- **Added**: `gados-project/verification/BETA-SCENARIOS.md`
+- **Purpose**: give QA/agents a single, authoritative “inputs → expectations → evidence” checklist per beta scenario (1–5), including current implementation status notes.
+

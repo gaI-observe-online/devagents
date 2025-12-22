@@ -16,6 +16,7 @@ Last updated: 2025-12-22 (QA evidence completed)
 - **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
 - **Regression plan**: `gados-project/verification/BETA-REGRESSION-PLAN.md`
 - **Evidence pack checklist**: `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
+- **Beta scenarios (authoritative)**: `gados-project/verification/BETA-SCENARIOS.md`
 - **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
 - **Regression log (latest)**: `gados-project/log/reports/BETA-QA-regression-20251222.md`
 - **Notifications report (latest)**: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
