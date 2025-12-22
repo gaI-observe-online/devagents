@@ -12,25 +12,25 @@ This repository contains:
 
 ```bash
 cp .env.example .env
-make up
+make beta-up
 ```
 
 Verify:
 
 ```bash
-make verify
+make beta-verify
 ```
 
 Stop:
 
 ```bash
-make down
+make beta-down
 ```
 
 Reset local runtime state:
 
 ```bash
-make reset
+make beta-reset
 ```
 
 ### 2) Run the local observability stack (optional, free)

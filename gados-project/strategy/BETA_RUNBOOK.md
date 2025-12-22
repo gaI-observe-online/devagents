@@ -6,7 +6,7 @@ This page is the **single “beta operator” guide**: how to start, verify, ins
 
 ```bash
 cp .env.example .env
-make up
+make beta-up
 ```
 
 Open: `http://127.0.0.1:8000`
@@ -14,7 +14,7 @@ Open: `http://127.0.0.1:8000`
 ## Verify it’s working
 
 ```bash
-make verify
+make beta-verify
 ```
 
 Manual checks:
@@ -43,13 +43,13 @@ Manual checks:
 Stop:
 
 ```bash
-make down
+make beta-down
 ```
 
 Reset local runtime state:
 
 ```bash
-make reset
+make beta-reset
 ```
 
 ## Observability (optional)

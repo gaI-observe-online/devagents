@@ -47,8 +47,8 @@ jobs:
 
   docker_smoke:
     runs-on: ubuntu-latest
-    # Optional signal for PRs, but required on main branch pushes.
-    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    # Beta credibility: docker smoke is mandatory (fails PR if broken).
+    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
 

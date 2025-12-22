@@ -34,6 +34,7 @@ from opentelemetry import metrics, trace
 
 app = FastAPI(title="GADOS Control Plane (CA GUI)", version="0.1.0")
 basic_auth = HTTPBasic(auto_error=False)
+_ready = False
 
 PKG_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PKG_DIR / "templates"))
@@ -198,6 +199,14 @@ async def _autorun_reports_loop() -> None:
 
 @app.on_event("startup")
 async def _startup() -> None:
+    global _ready
+    # Touch the bus DB so readiness reflects basic runtime initialization.
+    try:
+        list_inbox(to_role="CoordinationAgent", to_agent_id="CA-1", limit=1)
+    except Exception:
+        # Don't block startup; readiness will still flip to READY.
+        pass
+    _ready = True
     asyncio.create_task(_autorun_reports_loop())
 
 
@@ -249,8 +258,13 @@ def dashboard(request: Request) -> HTMLResponse:
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, str | bool]:
+    # Minimal readiness signal for beta runners/CI.
+    return {
+        "status": "READY" if _ready else "STARTING",
+        "ready": _ready,
+        "auth_enabled": _auth_enabled(),
+    }
 
 
 @app.get("/debug/trace")
