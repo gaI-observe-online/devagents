@@ -1,0 +1,30 @@
+{
+  "checks": {
+    "pytest_unit": {
+      "exit_code": 0
+    },
+    "ruff": {
+      "exit_code": 0
+    },
+    "sast_bandit": {
+      "exit_code": 1
+    },
+    "sbom_cyclonedx": {
+      "exit_code": 0
+    },
+    "sca_pip_audit": {
+      "exit_code": 0
+    },
+    "secrets_detect_secrets": {
+      "exit_code": 0
+    },
+    "validator": {
+      "exit_code": 0
+    }
+  },
+  "generated_at_utc": "2025-12-23T05:14:24+00:00",
+  "pr": "3",
+  "ref": "refs/pull/3/merge",
+  "repo": "gaI-observe-online/devagents",
+  "sha": "6ac63f59a7e8e07cbecdd012d6fed35cfca60fdf"
+}
