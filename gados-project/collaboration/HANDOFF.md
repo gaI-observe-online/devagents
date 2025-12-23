@@ -264,3 +264,8 @@ Add a unit test that:
 - **Added**: `gados-project/verification/EXPECTATION-VS-REALITY.md`
 - **Purpose**: provide swimlane flow tables for scenarios 1–5 to align QA/engineering/reviewers on expected behavior.
 
+#### 2025-12-22 — mStories scope added (Beta → Beta+)
+
+- **Added**: `gados-project/strategy/MSTORIES-BETA-BETAPLUS.md`
+- **Purpose**: capture the authoritative Beta/Beta+ milestone scope and acceptance criteria for PM/QA/dev agents.
+
