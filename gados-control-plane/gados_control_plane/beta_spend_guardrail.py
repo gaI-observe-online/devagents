@@ -12,6 +12,7 @@ from app.economics import LedgerEntry, append_ledger_entry, build_budget_trigger
 from app.notifications import Notification, dispatch_notification
 
 from .bus import send_message
+from .beta_run_store import BetaRunMeta, write_beta_run
 from .paths import ProjectPaths
 
 
@@ -203,5 +204,65 @@ def run_daily_spend_guardrail(
         escalation_rel_path=esc_rel,
         bus_message_id=message_id,
         notification_queued_path=queued_path,
+    )
+
+
+def write_guardrail_beta_run(*, paths: ProjectPaths, result: GuardrailResult) -> dict[str, str]:
+    """
+    Beta+ standard: emit a run-scoped decision object + immutable run folder.
+    """
+    thr = (result.threshold or "").upper()
+    if thr in {"CRITICAL", "HARD_STOP"}:
+        rec = "NO-GO"
+        summary = "Budget threshold breached at critical level. Release blocked until spend is understood and controlled."
+        next_action = "Review the escalation artifact, reduce spend, and re-run guardrail after remediation."
+        pm_blockers = [{"owner": "Eng+PM", "pm_summary": "Spend exceeded approved budget threshold; release blocked until mitigated."}]
+        sev = "CRITICAL"
+    elif thr in {"WARN", "HIGH"}:
+        rec = "REVIEW"
+        summary = "Budget threshold warning detected. Release requires review before proceeding."
+        next_action = "Review spend drivers and confirm budget approval before release."
+        pm_blockers = [{"owner": "PM", "pm_summary": "Spend warning requires approval; confirm budget and proceed with caution."}]
+        sev = "HIGH" if thr == "HIGH" else "WARN"
+    else:
+        rec = "GO"
+        summary = "No budget threshold breach detected."
+        next_action = "Proceed with release; continue monitoring spend."
+        pm_blockers = []
+        sev = "INFO"
+
+    checks = {
+        "ledger_appended": {"exit_code": 0 if result.ledger_rel_path else 1},
+        "escalation_created": {"exit_code": 0 if result.escalation_rel_path else 1},
+        "bus_event_emitted": {"exit_code": 0 if result.bus_message_id else 1},
+        "notification_queued": {"exit_code": 0 if result.notification_queued_path else 1},
+    }
+    evidence = [
+        result.ledger_rel_path,
+        *( [result.escalation_rel_path] if result.escalation_rel_path else [] ),
+        "log/bus/bus-events.jsonl",
+        "log/reports/NOTIFICATIONS-20251222.md" if (paths.gados_root / "log" / "reports" / "NOTIFICATIONS-20251222.md").exists() else "log/reports",
+    ]
+    return write_beta_run(
+        paths,
+        meta=BetaRunMeta(
+            scenario="daily-spend-guardrail",
+            recommendation=rec,
+            decision_summary=summary,
+            required_next_action=next_action,
+            pm_blockers=pm_blockers,
+            top_findings=[
+                {
+                    "severity": sev,
+                    "tool": "economics",
+                    "title": f"Threshold={result.threshold or 'NONE'} spend_usd={result.spend_usd:.2f} budget_usd={result.budget_usd:.2f}",
+                    "file": result.escalation_rel_path or result.ledger_rel_path,
+                    "line": "",
+                }
+            ],
+            evidence_paths=[p for p in evidence if p],
+            checks=checks,
+            correlation_id=result.correlation_id,
+        ),
     )
 

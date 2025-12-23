@@ -19,6 +19,12 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .agents_langgraph import run_daily_digest
 from .beta_spend_guardrail import run_daily_spend_guardrail
+from .beta_spend_guardrail import write_guardrail_beta_run
+from .beta_policy_drift import run_policy_drift_watchdog
+from .beta_policy_drift import write_policy_drift_beta_run
+from .beta_sla_sentinel import beat as record_beta_heartbeat
+from .beta_sla_sentinel import run_sla_breach_sentinel
+from .beta_sla_sentinel import write_sla_beta_run
 from .bus import ack_message, list_inbox, send_message
 from .artifacts import (
     append_text,
@@ -107,6 +113,32 @@ def _list_review_runs(paths) -> list[dict]:
         meta = _safe_read_json(meta_path)
         run_id = str(meta.get("run_id") or run_dir.name)
         scenario = str(meta.get("scenario") or "code-review-factory")
+        decision = str(meta.get("recommendation") or "UNKNOWN")
+        ts = str(meta.get("generated_at_utc") or "")
+        runs.append(
+            {
+                "run_id": run_id,
+                "scenario": scenario,
+                "decision": decision,
+                "generated_at_utc": ts,
+                "detail_url": f"/beta/runs/{run_id}",
+            }
+        )
+    return runs
+
+
+def _list_beta_runs(paths) -> list[dict]:
+    root = paths.gados_root / "log" / "reports" / "beta-runs"
+    runs: list[dict] = []
+    if not root.exists():
+        return runs
+    for run_dir in sorted([p for p in root.iterdir() if p.is_dir()], reverse=True):
+        meta_path = run_dir / "run.json"
+        if not meta_path.exists():
+            continue
+        meta = _safe_read_json(meta_path)
+        run_id = str(meta.get("run_id") or run_dir.name)
+        scenario = str(meta.get("scenario") or "beta-scenario")
         decision = str(meta.get("recommendation") or "UNKNOWN")
         ts = str(meta.get("generated_at_utc") or "")
         runs.append(
@@ -535,27 +567,47 @@ def beta_runs(request: Request) -> HTMLResponse:
     Read-only decision UI for beta scenarios (PM-friendly).
     """
     paths = get_paths()
-    runs = _list_review_runs(paths)
+    runs = _list_review_runs(paths) + _list_beta_runs(paths)
+    # Sort newest first when timestamps are comparable; fall back to id.
+    runs = sorted(runs, key=lambda r: (str(r.get("generated_at_utc") or ""), str(r.get("run_id") or "")), reverse=True)
     return templates.TemplateResponse("beta_runs.html", {"request": request, "runs": runs})
 
 
 @app.get("/beta/runs/{run_id}", response_class=HTMLResponse)
 def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
     paths = get_paths()
-    run_dir = paths.gados_root / "log" / "reports" / "review-runs" / run_id
-    meta = _safe_read_json(run_dir / "run.json")
-    if not meta:
-        raise HTTPException(status_code=404, detail="Run not found")
-
-    decision_rel = f"decision/{run_id}.md"
-    pack_index_rel = f"log/reports/review-runs/{run_id}/REVIEW_PACK.md"
-    exec_summary_rel = f"log/reports/review-runs/{run_id}/Executive_Summary.md"
-    findings_rel = f"log/reports/review-runs/{run_id}/Findings.csv"
-    sums_rel = f"log/reports/review-runs/{run_id}/SHA256SUMS.txt"
-
-    override_art = _strip_gados_prefix(str(meta.get("override_artifact") or ""))
-    override_required = bool(meta.get("override_required"))
-    run_key = _run_key_from_run_id(run_id)
+    # REVIEW-* runs live in review-runs; beta scenario runs live in beta-runs.
+    if run_id.startswith("REVIEW-"):
+        run_dir = paths.gados_root / "log" / "reports" / "review-runs" / run_id
+        meta = _safe_read_json(run_dir / "run.json")
+        if not meta:
+            raise HTTPException(status_code=404, detail="Run not found")
+        decision_rel = f"decision/{run_id}.md"
+        sums_rel = f"log/reports/review-runs/{run_id}/SHA256SUMS.txt"
+        pack_index_rel = f"log/reports/review-runs/{run_id}/REVIEW_PACK.md"
+        evidence_paths = [
+            pack_index_rel,
+            f"log/reports/review-runs/{run_id}/Executive_Summary.md",
+            f"log/reports/review-runs/{run_id}/Findings.csv",
+            sums_rel,
+            decision_rel,
+        ]
+        override_art = _strip_gados_prefix(str(meta.get("override_artifact") or ""))
+        override_required = bool(meta.get("override_required"))
+        run_key = _run_key_from_run_id(run_id)
+    else:
+        run_dir = paths.gados_root / "log" / "reports" / "beta-runs" / run_id
+        meta = _safe_read_json(run_dir / "run.json")
+        if not meta:
+            raise HTTPException(status_code=404, detail="Run not found")
+        decision_rel = f"decision/{run_id}.md"
+        sums_rel = f"log/reports/beta-runs/{run_id}/SHA256SUMS.txt"
+        evidence_paths = list(meta.get("evidence_paths") or [])
+        # Always include the run container itself.
+        evidence_paths = [f"log/reports/beta-runs/{run_id}/run.json", sums_rel, decision_rel] + evidence_paths
+        override_art = ""  # overrides are only for Scenario 4 in beta+
+        override_required = False
+        run_key = ""
 
     return templates.TemplateResponse(
         "beta_run_detail.html",
@@ -565,9 +617,7 @@ def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
             "run_id": run_id,
             "run_key": run_key,
             "decision_rel": decision_rel,
-            "pack_index_rel": pack_index_rel,
-            "exec_summary_rel": exec_summary_rel,
-            "findings_rel": findings_rel,
+            "evidence_paths": evidence_paths,
             "sums_rel": sums_rel,
             "override_required": override_required,
             "override_rel": override_art,
@@ -645,10 +695,56 @@ def run_agents_daily_spend_guardrail(
             raise HTTPException(status_code=400, detail="Invalid spend_steps")
 
     out = run_daily_spend_guardrail(paths=paths, budget_usd=budget, spend_steps_usd=steps)
+    write_guardrail_beta_run(paths=paths, result=out)
     # Prefer showing the created escalation decision if any.
     if out.escalation_rel_path:
         return RedirectResponse(url=f"/view?path={out.escalation_rel_path}", status_code=303)
     return RedirectResponse(url="/inbox?role=CoordinationAgent&agent_id=CA-1", status_code=303)
+
+
+@app.post("/agents/run/policy-drift-watchdog")
+def run_agents_policy_drift_watchdog(
+    baseline_rel_path: str = Form("memory/BETA_POLICY_BASELINE.yaml"),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
+    paths = get_paths()
+    out = run_policy_drift_watchdog(paths=paths, baseline_rel_path=baseline_rel_path.strip() or "memory/BETA_POLICY_BASELINE.yaml")
+    write_policy_drift_beta_run(paths=paths, result=out)
+    if out.report_rel_path:
+        return RedirectResponse(url=f"/view?path={out.report_rel_path}", status_code=303)
+    return RedirectResponse(url="/inbox?role=CoordinationAgent&agent_id=CA-1", status_code=303)
+
+
+@app.post("/agents/heartbeat")
+def agents_heartbeat(
+    role: str = Form("CoordinationAgent"),
+    agent_id: str = Form("CA-1"),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
+    record_beta_heartbeat(role=role, agent_id=agent_id)
+    return RedirectResponse(url=f"/inbox?role={role}&agent_id={agent_id}", status_code=303)
+
+
+@app.post("/agents/run/sla-sentinel")
+def run_agents_sla_sentinel(
+    role: str = Form("CoordinationAgent"),
+    agent_id: str = Form("CA-1"),
+    heartbeat_sla_seconds: str = Form("30"),
+    latency_sla_ms: str = Form("250"),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
+    paths = get_paths()
+    try:
+        hb = float(heartbeat_sla_seconds)
+        lat = float(latency_sla_ms)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid SLA values")
+
+    out = run_sla_breach_sentinel(paths=paths, role=role, agent_id=agent_id, heartbeat_sla_seconds=hb, latency_sla_ms=lat)
+    write_sla_beta_run(paths=paths, result=out)
+    if out.report_rel_path:
+        return RedirectResponse(url=f"/view?path={out.report_rel_path}", status_code=303)
+    return RedirectResponse(url=f"/inbox?role={role}&agent_id={agent_id}", status_code=303)
 
 
 @app.get("/inbox", response_class=HTMLResponse)

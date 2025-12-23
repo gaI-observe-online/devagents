@@ -12,6 +12,7 @@ from opentelemetry import trace
 from app.notifications import Notification, dispatch_notification
 
 from .bus import send_message
+from .beta_run_store import BetaRunMeta, write_beta_run
 from .paths import ProjectPaths
 
 
@@ -219,5 +220,61 @@ def run_policy_drift_watchdog(
         report_rel_path=report_rel,
         bus_message_id=msg_id,
         notification_queued_path=queued_path,
+    )
+
+
+def write_policy_drift_beta_run(*, paths: ProjectPaths, result: PolicyDriftResult) -> dict[str, str]:
+    ms = (result.max_severity or "LOW").upper()
+    if result.drift_count == 0:
+        rec = "GO"
+        summary = "No policy drift detected against the approved baseline."
+        next_action = "Proceed with release."
+        pm_blockers: list[dict[str, str]] = []
+        sev = "INFO"
+    elif ms in {"HIGH", "CRITICAL"}:
+        rec = "NO-GO"
+        summary = "Policy drift detected at high severity. Release blocked until configuration is corrected or re-approved."
+        next_action = "Revert configuration to baseline or obtain approval for new policy; then re-run watchdog."
+        pm_blockers = [{"owner": "Eng+Security", "pm_summary": "Runtime configuration drifted from approved baseline; release blocked until corrected."}]
+        sev = "CRITICAL" if ms == "CRITICAL" else "HIGH"
+    else:
+        rec = "REVIEW"
+        summary = "Policy drift detected. Release requires review before proceeding."
+        next_action = "Review drift report; confirm whether drift is acceptable and document decision."
+        pm_blockers = [{"owner": "PM", "pm_summary": "Config drift requires review/approval before release."}]
+        sev = "WARN"
+
+    checks = {
+        "baseline_loaded": {"exit_code": 0 if result.baseline_rel_path else 1},
+        "report_written": {"exit_code": 0 if result.report_rel_path else (0 if result.drift_count == 0 else 1)},
+        "bus_event_emitted": {"exit_code": 0 if (result.bus_message_id or result.drift_count == 0) else 1},
+        "notification_queued": {"exit_code": 0 if (result.notification_queued_path or result.drift_count == 0) else 1},
+    }
+    evidence = [
+        result.baseline_rel_path,
+        *( [result.report_rel_path] if result.report_rel_path else [] ),
+        "log/bus/bus-events.jsonl",
+    ]
+    return write_beta_run(
+        paths,
+        meta=BetaRunMeta(
+            scenario="policy-drift-watchdog",
+            recommendation=rec,
+            decision_summary=summary,
+            required_next_action=next_action,
+            pm_blockers=pm_blockers,
+            top_findings=[
+                {
+                    "severity": sev,
+                    "tool": "policy",
+                    "title": f"Drifts={result.drift_count} max_severity={ms}",
+                    "file": result.report_rel_path or result.baseline_rel_path,
+                    "line": "",
+                }
+            ],
+            evidence_paths=[p for p in evidence if p],
+            checks=checks,
+            correlation_id=result.correlation_id,
+        ),
     )
 

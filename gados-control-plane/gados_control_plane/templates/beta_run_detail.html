@@ -100,13 +100,18 @@
 
   <article>
     <header><strong>Evidence pack</strong></header>
-    <ul>
-      <li><a href="/view?path={{ pack_index_rel }}">Review pack index</a> <span class="muted">(<code>{{ pack_index_rel }}</code>)</span></li>
-      <li><a href="/view?path={{ exec_summary_rel }}">Executive summary</a></li>
-      <li><a href="/view?path={{ findings_rel }}">Findings.csv</a></li>
-      <li><a href="/view?path={{ sums_rel }}">SHA256SUMS (immutability)</a></li>
-      <li><a href="/view?path={{ decision_rel }}">Decision artifact (human-readable)</a></li>
-    </ul>
+    {% if evidence_paths and evidence_paths|length > 0 %}
+      <ul>
+        {% for p in evidence_paths %}
+          <li><a href="/view?path={{ p }}">{{ p }}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <ul>
+        <li><a href="/view?path={{ sums_rel }}">SHA256SUMS (immutability)</a></li>
+        <li><a href="/view?path={{ decision_rel }}">Decision artifact (human-readable)</a></li>
+      </ul>
+    {% endif %}
   </article>
 
   <article>

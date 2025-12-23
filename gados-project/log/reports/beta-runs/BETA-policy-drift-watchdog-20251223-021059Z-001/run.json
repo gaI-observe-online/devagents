@@ -1,0 +1,46 @@
+{
+  "checks": {
+    "baseline_loaded": {
+      "exit_code": 0
+    },
+    "bus_event_emitted": {
+      "exit_code": 0
+    },
+    "notification_queued": {
+      "exit_code": 0
+    },
+    "report_written": {
+      "exit_code": 0
+    }
+  },
+  "confidence": "HIGH",
+  "correlation_id": "28779936-b9fc-4299-83e1-9a7519b26cd1",
+  "decision_summary": "Policy drift detected at high severity. Release blocked until configuration is corrected or re-approved.",
+  "evidence_paths": [
+    "memory/BETA_POLICY_BASELINE.yaml",
+    "log/reports/POLICY-DRIFT-20251223-021059.md",
+    "log/bus/bus-events.jsonl"
+  ],
+  "generated_at_utc": "2025-12-23T02:10:59+00:00",
+  "not_run": [],
+  "pm_blockers": [
+    {
+      "owner": "Eng+Security",
+      "pm_summary": "Runtime configuration drifted from approved baseline; release blocked until corrected."
+    }
+  ],
+  "recommendation": "NO-GO",
+  "required_next_action": "Revert configuration to baseline or obtain approval for new policy; then re-run watchdog.",
+  "run_id": "BETA-policy-drift-watchdog-20251223-021059Z-001",
+  "scenario": "policy-drift-watchdog",
+  "schema": "gados.beta_run.v1",
+  "top_findings": [
+    {
+      "file": "log/reports/POLICY-DRIFT-20251223-021059.md",
+      "line": "",
+      "severity": "HIGH",
+      "title": "Drifts=4 max_severity=HIGH",
+      "tool": "policy"
+    }
+  ]
+}
