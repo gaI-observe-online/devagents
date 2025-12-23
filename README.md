@@ -65,3 +65,6 @@ It writes an audit-friendly report artifact to `gados-project/log/reports/`.
 Open this file in a browser:
 - `gados-project/strategy/GADOS-STRATEGIC-GAME-PLAN.html`
 
+## Whitepaper
+- `gados-project/strategy/WHITEPAPER-PRODUCTION-SURVIVABLE-GENAI.md`
+

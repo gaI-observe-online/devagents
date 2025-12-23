@@ -15,6 +15,9 @@ Use `/gados-project/templates/EPIC.template.md`.
 - Scope freeze + acceptance gates: `BETA_SCOPE.md`
 - Release definition: `BETA_CONTRACT.md`
 
+## Whitepaper
+- `WHITEPAPER-PRODUCTION-SURVIVABLE-GENAI.md`
+
 ## Strategic game plan (HTML)
 For a shareable, polished single-page view, see:
 - `GADOS-STRATEGIC-GAME-PLAN.html`
