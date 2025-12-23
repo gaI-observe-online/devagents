@@ -126,6 +126,19 @@ def _pm_reason(reason: str) -> dict[str, str]:
     return {"pm_summary": reason, "owner": "Eng"}
 
 
+def _detect_secrets_exclude_regex() -> str:
+    """
+    detect-secrets is intentionally noisy on virtualenvs and tool caches.
+    Provide a conservative default exclude regex; override via env if needed.
+    """
+    override = os.getenv("GADOS_DETECT_SECRETS_EXCLUDE_REGEX", "").strip()
+    if override:
+        return override
+    # Exclude virtualenvs, caches, git metadata, and generated artifact logs.
+    # Keep repo source visible.
+    return r"(^|/)(\.venv|venv|\.pytest_cache|\.ruff_cache|__pycache__|\.git|\.mypy_cache|node_modules|\.gados-runtime|gados-project/log)(/|$)"
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     pr = os.getenv("GITHUB_PR_NUMBER", "").strip()
@@ -185,8 +198,9 @@ def main() -> int:
 
     # Secrets & Config Hygiene Agent (detect-secrets)
     secrets_json_path = out_dir / "Secrets_Report.json"
+    secrets_exclude = _detect_secrets_exclude_regex()
     secrets_rc = _run_to_file(
-        ["detect-secrets", "scan", "--all-files"],
+        ["detect-secrets", "scan", "--all-files", "--exclude-files", secrets_exclude],
         secrets_json_path,
     )
 
