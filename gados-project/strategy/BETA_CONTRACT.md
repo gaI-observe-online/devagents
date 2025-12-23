@@ -14,6 +14,14 @@ This document defines what “beta” means for this repository: supported envir
   - `GADOS_RUNTIME_DIR` (runtime state location)
   - OTel export vars (optional; `OTEL_SDK_DISABLED=1` default)
 
+## Explicit non-scope (beta boundary)
+- This repo’s “beta” is **not**:
+  - legal certification
+  - compliance attestation
+  - production monitoring
+- It *is*:
+  - an evidence-backed, policy-enforced decision control plane for governed delivery workflows
+
 ## Golden path (10 minutes)
 ```bash
 cp .env.example .env

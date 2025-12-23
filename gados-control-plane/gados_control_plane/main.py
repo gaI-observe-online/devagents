@@ -121,6 +121,17 @@ def _list_review_runs(paths) -> list[dict]:
     return runs
 
 
+def _run_key_from_run_id(run_id: str) -> str:
+    # run_id format: REVIEW-<run_key>-NNN
+    rid = (run_id or "").strip()
+    if not rid.startswith("REVIEW-"):
+        return "unknown"
+    parts = rid.split("-")
+    if len(parts) < 3:
+        return "unknown"
+    return "-".join(parts[1:-1])
+
+
 # CORS is explicit (empty => no CORS headers)
 _origins = _cors_allow_origins()
 if _origins:
@@ -544,6 +555,7 @@ def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
 
     override_art = _strip_gados_prefix(str(meta.get("override_artifact") or ""))
     override_required = bool(meta.get("override_required"))
+    run_key = _run_key_from_run_id(run_id)
 
     return templates.TemplateResponse(
         "beta_run_detail.html",
@@ -551,6 +563,7 @@ def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
             "request": request,
             "run": meta,
             "run_id": run_id,
+            "run_key": run_key,
             "decision_rel": decision_rel,
             "pack_index_rel": pack_index_rel,
             "exec_summary_rel": exec_summary_rel,
@@ -560,6 +573,49 @@ def beta_run_detail(request: Request, run_id: str) -> HTMLResponse:
             "override_rel": override_art,
         },
     )
+
+
+@app.post("/beta/override")
+def create_beta_override(
+    run_key: str = Form(...),
+    approved_by: str = Form(...),
+    role: str = Form("HumanAuthority"),
+    reason: str = Form(...),
+    _user: str = Depends(require_write_auth),
+) -> RedirectResponse:
+    """
+    Accountable override: creates decision/OVERRIDE-<run_key>.md.
+    This is the ONLY supported way to bypass a NO-GO, and it is auditable.
+    """
+    paths = get_paths()
+    rk = (run_key or "").strip()
+    if not rk or len(rk) > 80:
+        raise HTTPException(status_code=400, detail="Invalid run_key")
+    rel = f"decision/OVERRIDE-{rk}.md"
+    p = paths.gados_root / rel
+    if p.exists():
+        return RedirectResponse(url=f"/view?path={rel}", status_code=303)
+    content = "\n".join(
+        [
+            f"# OVERRIDE for run_key: {rk}",
+            "",
+            "Decision: OVERRIDE",
+            "",
+            f"Approved by: {approved_by}",
+            f"approved_by: {approved_by}",
+            f"Role: {role}",
+            "",
+            "Reason:",
+            f"- {reason}",
+            "",
+            f"Recorded at (UTC): {_utc_now()}",
+            "",
+            "_Note: Overrides are exceptional and must be reviewed. Follow-up remediation is still required._",
+            "",
+        ]
+    )
+    write_text(paths, rel, content)
+    return RedirectResponse(url=f"/view?path={rel}", status_code=303)
 
 
 @app.post("/agents/run/daily-digest")

@@ -95,3 +95,29 @@ Append new handoffs at the bottom. Do not rewrite history.
 **Notes / follow-ups**
 - QA regression plan updates to be appended in collaboration hub as they progress.
 
+---
+
+**Date (UTC)**: 2025-12-23  
+**From**: Control Plane Agent (this branch)  
+**To**: QA / PM reviewers  
+**Scope**: Beta+ trust hardening: decision explainability + override UX + failure transparency + proof runs
+
+**Artifacts/Code delivered**
+- Decision-first run UI: `/beta/runs` and `/beta/runs/{run_id}` (confidence, “what ran”, non-scope banner)
+- Accountable override creation: `POST /beta/override` (creates `decision/OVERRIDE-<run_key>.md`)
+- Review factory run metadata now includes: confidence + NOT RUN + decision_summary + required_next_action
+- PM walkthrough: `gados-project/verification/PM-WALKTHROUGH.md`
+
+**Evidence runs (Scenario 4)**
+- Clean GO: `gados-project/log/reports/review-runs/REVIEW-local-nosha-003/` (decision: GO)
+- Seeded NO-GO (deterministic):
+  - `gados-project/log/reports/review-runs/REVIEW-seeded-nosha-002/` (NO-GO, secrets=1)
+  - `gados-project/log/reports/review-runs/REVIEW-seeded-nosha-003/` (NO-GO, secrets=1)
+
+**Verification**
+- ruff: PASS (`python3 -m ruff check .`)
+- pytest: PASS (`python3 -m pytest -q`) — `17 passed, 4 skipped`
+
+**Notes / follow-ups**
+- After capturing screenshots, remove the seeded file per `PM-WALKTHROUGH.md` (do not commit).
+

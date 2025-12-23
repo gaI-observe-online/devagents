@@ -139,6 +139,40 @@ def _detect_secrets_exclude_regex() -> str:
     return r"(^|/)(\.venv|venv|\.pytest_cache|\.ruff_cache|__pycache__|\.git|\.mypy_cache|node_modules|\.gados-runtime|gados-project/log)(/|$)"
 
 
+def _check_status(exit_code: int) -> str:
+    # Convention:
+    # - 0 => PASS
+    # - 127 => NOT RUN (tool missing / execution error in _run)
+    # - else => FAIL (tool ran, but had findings or errors)
+    if exit_code == 0:
+        return "PASS"
+    if exit_code == 127:
+        return "NOT_RUN"
+    return "FAIL"
+
+
+def _compute_confidence(checks: dict[str, dict[str, Any]]) -> tuple[str, list[str]]:
+    """
+    Confidence is based on evidence completeness:
+    - HIGH: no NOT_RUN
+    - MEDIUM: 1-2 NOT_RUN
+    - LOW: 3+ NOT_RUN
+    """
+    not_run: list[str] = []
+    for name, v in (checks or {}).items():
+        try:
+            rc = int((v or {}).get("exit_code", 127))
+        except Exception:
+            rc = 127
+        if _check_status(rc) == "NOT_RUN":
+            not_run.append(name)
+    if len(not_run) == 0:
+        return "HIGH", not_run
+    if len(not_run) <= 2:
+        return "MEDIUM", not_run
+    return "LOW", not_run
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     pr = os.getenv("GITHUB_PR_NUMBER", "").strip()
@@ -508,8 +542,21 @@ def main() -> int:
     sums_path.write_text("\n".join(sums) + "\n", encoding="utf-8")
 
     # Write run metadata for UI + audit traceability.
+    checks = summary.get("checks") if isinstance(summary, dict) else {}
+    confidence, not_run = _compute_confidence(checks if isinstance(checks, dict) else {})
     top_findings = sorted(findings, key=lambda f: -_severity_rank(str(f.get("severity", "LOW"))))[:3]
     pm_blockers = [_pm_reason(r) for r in blocked_reasons] if blocked_reasons else []
+    required_next_action = ""
+    decision_summary = ""
+    if recommendation == "NO-GO":
+        decision_summary = "Release blocked by automated governance/security gates."
+        required_next_action = "Fix blockers and re-run. If you must proceed, file a Human Authority override with justification."
+    elif recommendation == "GO_WITH_EXCEPTIONS":
+        decision_summary = "Release allowed only because a Human Authority override is on file."
+        required_next_action = "Ensure override justification is reviewed and tracked; remediate the underlying issue(s) as follow-up."
+    else:
+        decision_summary = "No release blockers detected by automated gates."
+        required_next_action = "Proceed with release or request Human review if risk tolerance requires it."
     run_meta = {
         "schema": "gados.review_run.v1",
         "run_id": run_id,
@@ -521,6 +568,11 @@ def main() -> int:
         "sha": sha,
         "pr": pr,
         "recommendation": recommendation,  # GO | NO-GO | GO_WITH_EXCEPTIONS
+        "confidence": confidence,  # HIGH | MEDIUM | LOW
+        "not_run": not_run,  # tools that did not run (evidence missing)
+        "decision_summary": decision_summary,
+        "required_next_action": required_next_action,
+        "checks": checks,
         "blocked_reasons": blocked_reasons,
         "pm_blockers": pm_blockers,
         "counts": {
