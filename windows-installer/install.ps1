@@ -283,8 +283,10 @@ function Start-UI {
         $status = $state.steps[$s.id].status
         $note = $state.steps[$s.id].note
       }
+      $suffix = ""
+      if ($note) { $suffix = " - $note" }
       $tb = New-Object System.Windows.Controls.TextBlock
-      $tb.Text = ("[" + $status + "] " + $s.title + ($(if ($note) { " — " + $note } else { "" })))
+      $tb.Text = "[$status] $($s.title)$suffix"
       $tb.Margin = "0,0,0,6"
       $stepsPanel.Children.Add($tb) | Out-Null
     }
