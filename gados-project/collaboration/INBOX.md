@@ -109,3 +109,33 @@ We captured and documented a real traceback that occurred during regression evid
 - Fix: update `scripts/flush_digest.py` to add repo root to `sys.path` before importing `app.*`
 - Traceback + note recorded in `gados-project/collaboration/QA_AUDIT.md`
 
+#### 2025-12-23 — To: Merge agent / Anyone unblocking PR #3
+
+**Subject**: PR #3 unblock checklist — failing `docker_smoke` + `review_pack` + Windows Docker test steps
+
+**Body**:
+
+Two remaining failing checks on PR #3 (`cursor/gados-game-plan-agent-replacement-3913`):
+
+- `CI / docker_smoke`: LGTM container `otel-lgtm-test` is marked unhealthy because `compose.test.yml` uses `wget` inside `grafana/otel-lgtm:0.9.2` for healthcheck.
+  - Fix: change LGTM healthcheck to the readiness file the image creates:
+    - `healthcheck.test: ["CMD-SHELL", "test -f /tmp/ready"]`
+    - bump `retries` to `60` (optional but reduces flake).
+- `Code Review Factory (Audit Pack) / review_pack`: NO-GO due to `Secrets detected (1)` from `detect-secrets`.
+  - Root cause: `gados-project/verification/PM-WALKTHROUGH.md` includes the literal marker `-----BEGIN PRIVATE KEY-----`.
+  - Fix: remove the literal PEM marker from the repo; use a runtime-generated key snippet instead (e.g., `ssh-keygen ...; cp ...; rm ...`), keeping cleanup of the seeded file.
+
+Minimal local verification (after rebase completes):
+
+- `python -m ruff check .`
+- `python -m pytest -q -m "not integration"`
+- `python gados-control-plane/scripts/validate_artifacts.py`
+- `python scripts/generate_review_pack.py` (should exit 0 once the secret marker is removed)
+
+Windows Docker smoke (Docker Desktop + WSL2):
+
+- `docker compose -f compose.test.yml up -d --build`
+- `curl http://localhost:3000/api/health`
+- `curl http://localhost:8000/health`
+- `docker compose -f compose.test.yml down -v`
+
