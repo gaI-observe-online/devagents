@@ -114,6 +114,16 @@ function Get-GadosFacts {
     [int]$ServicePort = 8000
   )
 
+  $dockerDiag = @{
+    docker_service_running = $null
+    wsl_present = $null
+    wsl_default_version = $null
+    wsl_status = $null
+    hypervisorlaunchtype = $null
+    vmp_enabled = $null
+    wsl_feature_enabled = $null
+  }
+
   $facts = @{
     ps_edition = $PSVersionTable.PSEdition
     ps_version = ($PSVersionTable.PSVersion.ToString())
@@ -131,6 +141,7 @@ function Get-GadosFacts {
     has_compose_obs = $false
     grafana_port_in_use = (Get-GadosTcpPortInUse -Port $GrafanaPort)
     service_port_in_use = (Get-GadosTcpPortInUse -Port $ServicePort)
+    docker_diag = $dockerDiag
   }
 
   $facts.is_admin = (Test-GadosIsAdmin)
@@ -145,6 +156,45 @@ function Get-GadosFacts {
   }
 
   if ($facts.has_docker) {
+    # Docker Desktop Windows service status (best-effort).
+    try {
+      $svc = Get-Service -Name "com.docker.service" -ErrorAction Stop
+      $facts.docker_diag.docker_service_running = ($svc.Status -eq "Running")
+    } catch {
+      $facts.docker_diag.docker_service_running = $null
+    }
+
+    # WSL diagnostics (common cause for "engine won't start").
+    try {
+      & wsl.exe --status *> $null
+      $facts.docker_diag.wsl_present = $true
+      try {
+        $status = & wsl.exe --status 2>&1 | Out-String
+        $facts.docker_diag.wsl_status = $status.Trim()
+        if ($status -match "Default Version:\s*(\d+)") {
+          $facts.docker_diag.wsl_default_version = $Matches[1]
+        }
+      } catch {}
+    } catch {
+      $facts.docker_diag.wsl_present = $false
+    }
+
+    # Windows feature + hypervisor boot checks (best-effort).
+    try {
+      $bcd = & bcdedit /enum 2>$null | Out-String
+      if ($bcd -match "hypervisorlaunchtype\s+(\w+)") {
+        $facts.docker_diag.hypervisorlaunchtype = $Matches[1]
+      }
+    } catch {}
+    try {
+      $vmp = Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -ErrorAction Stop
+      $facts.docker_diag.vmp_enabled = ($vmp.State -eq "Enabled")
+    } catch {}
+    try {
+      $wslf = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -ErrorAction Stop
+      $facts.docker_diag.wsl_feature_enabled = ($wslf.State -eq "Enabled")
+    } catch {}
+
     try {
       & docker compose version *> $null
       $facts.has_docker_compose = $true
@@ -398,7 +448,16 @@ function Get-GadosSteps {
           return (New-GadosDecision -Decision "PAUSE" -Detected "docker compose not available." -Changed "nothing" -Action "Start Docker Desktop and ensure Compose is enabled, then re-run." -Resume $resumeBase)
         }
         if (-not $facts.docker_running) {
-          return (New-GadosDecision -Decision "PAUSE" -Detected "Docker engine not reachable (docker info failed)." -Changed "nothing" -Action "Start Docker Desktop (WSL2 backend recommended). If prompted, reboot, then re-run." -Resume $resumeBase)
+          $d = $facts.docker_diag
+          $hints = @()
+          if ($d.docker_service_running -eq $false) { $hints += "Docker Desktop service not running (com.docker.service)" }
+          if ($d.wsl_present -eq $false) { $hints += "WSL not available (wsl.exe missing or not enabled)" }
+          if ($d.wsl_feature_enabled -eq $false) { $hints += "Windows feature 'Microsoft-Windows-Subsystem-Linux' is disabled" }
+          if ($d.vmp_enabled -eq $false) { $hints += "Windows feature 'VirtualMachinePlatform' is disabled" }
+          if ($d.hypervisorlaunchtype -eq "Off") { $hints += "Hypervisor is disabled at boot (hypervisorlaunchtype Off)" }
+          $hintText = if ($hints.Count -gt 0) { (" Hints: " + ($hints -join "; ") + ".") } else { "" }
+          $action = "Start Docker Desktop. If it still fails: enable WSL2 + Virtual Machine Platform, ensure virtualization is enabled in BIOS, then reboot. Then re-run."
+          return (New-GadosDecision -Decision "PAUSE" -Detected ("Docker engine not reachable (docker info failed)." + $hintText) -Changed "nothing" -Action $action -Resume $resumeBase)
         }
         return (New-GadosDecision -Decision "SKIP" -Detected "Docker engine reachable." -Changed "nothing" -Action "none" -Resume $resumeBase)
       }
