@@ -81,6 +81,18 @@ def _init_db() -> None:
             """
         )
 
+        # Heartbeats: used by system status pages / dashboards
+        con.execute(
+            """
+            CREATE TABLE IF NOT EXISTS heartbeats (
+              role TEXT NOT NULL,
+              agent_id TEXT NOT NULL,
+              last_seen_at TEXT NOT NULL,
+              PRIMARY KEY(role, agent_id)
+            );
+            """
+        )
+
 
 def _append_audit(event: dict[str, Any]) -> None:
     _ensure_dirs()
@@ -269,3 +281,32 @@ def ack_message(*, message_id: str, status: AckStatus, actor_role: str, actor_id
         }
     )
 
+
+def record_heartbeat(*, role: str, agent_id: str, at: str | None = None) -> None:
+    """
+    Record (upsert) an agent heartbeat timestamp in the runtime DB.
+    """
+    _init_db()
+    now = at or _utc_now_iso()
+    with _connect() as con:
+        con.execute(
+            """
+            INSERT INTO heartbeats(role, agent_id, last_seen_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(role, agent_id) DO UPDATE SET last_seen_at=excluded.last_seen_at
+            """,
+            (role, agent_id, now),
+        )
+
+
+def get_last_heartbeat(*, role: str, agent_id: str) -> str | None:
+    """
+    Return the last heartbeat timestamp (UTC ISO) or None if unknown.
+    """
+    _init_db()
+    with _connect() as con:
+        row = con.execute(
+            "SELECT last_seen_at FROM heartbeats WHERE role=? AND agent_id=?",
+            (role, agent_id),
+        ).fetchone()
+    return str(row["last_seen_at"]) if row else None
