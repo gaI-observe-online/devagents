@@ -2,6 +2,8 @@ param(
   [switch]$NoUI,
   [switch]$Reset,
   [switch]$UpgradeOnly,
+  [switch]$NoDocker,
+  [ValidateSet("Machine","User")][string]$InstallScope = "Machine",
   [string]$RepoUrl = "https://github.com/gaI-observe-online/devagents",
   [string]$InstallRoot = "C:\ProgramData\GADOS",
   [string]$RepoDir = "C:\ProgramData\GADOS\repo"
@@ -10,205 +12,23 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ----------------------------
-# State + logging
-# ----------------------------
+# Controller-style installer lives in a module so we can regression-test the decision engine.
+$ModulePath = Join-Path $PSScriptRoot "GadosInstaller.psm1"
+Import-Module $ModulePath -Force
+
+if ($InstallScope -eq "User" -and $InstallRoot -eq "C:\ProgramData\GADOS") {
+  $InstallRoot = Join-Path $env:LOCALAPPDATA "GADOS"
+  $RepoDir = Join-Path $InstallRoot "repo"
+}
 
 $StateDir = Join-Path $InstallRoot "installer"
 $StatePath = Join-Path $StateDir "state.json"
 $LogPath = Join-Path $StateDir "install.log"
 
-function Ensure-Dirs {
-  New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
-}
-
-function Write-Log([string]$Message, [string]$Level = "INFO") {
-  Ensure-Dirs
-  $ts = (Get-Date).ToUniversalTime().ToString("s") + "Z"
-  $line = "$ts [$Level] $Message"
-  Add-Content -Path $LogPath -Value $line -Encoding UTF8
-  if ($script:UiLogAppend) { $script:UiLogAppend.Invoke($line) }
-}
-
-function Load-State {
-  Ensure-Dirs
-  if (!(Test-Path $StatePath)) {
-    return @{
-      schema = "gados.windows.installer.state.v1"
-      created_at = (Get-Date).ToUniversalTime().ToString("s") + "Z"
-      last_updated_at = (Get-Date).ToUniversalTime().ToString("s") + "Z"
-      current_step = 0
-      steps = @{}
-    }
-  }
-  return (Get-Content $StatePath -Raw -Encoding UTF8 | ConvertFrom-Json -AsHashtable)
-}
-
-function Save-State($state) {
-  Ensure-Dirs
-  $state.last_updated_at = (Get-Date).ToUniversalTime().ToString("s") + "Z"
-  ($state | ConvertTo-Json -Depth 10) | Set-Content -Path $StatePath -Encoding UTF8
-}
-
-function Set-StepStatus($state, [string]$id, [string]$status, [string]$note = "") {
-  if (-not $state.steps.ContainsKey($id)) { $state.steps[$id] = @{} }
-  $state.steps[$id].status = $status  # PENDING|RUNNING|DONE|FAILED|SKIPPED
-  $state.steps[$id].note = $note
-  $state.steps[$id].updated_at = (Get-Date).ToUniversalTime().ToString("s") + "Z"
-  Save-State $state
-}
-
-function Require-Admin {
-  $id = [Security.Principal.WindowsIdentity]::GetCurrent()
-  $p = New-Object Security.Principal.WindowsPrincipal($id)
-  if (-not $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "Administrator privileges required. Re-run PowerShell as Administrator."
-  }
-}
-
-function Has-Cmd([string]$name) {
-  return [bool](Get-Command $name -ErrorAction SilentlyContinue)
-}
-
-function Run([string]$title, [scriptblock]$fn) {
-  Write-Log $title "INFO"
-  & $fn
-}
-
-# ----------------------------
-# Steps
-# ----------------------------
-
-$Steps = @(
-  @{ id="admin"; title="Check Administrator privileges"; run={ Require-Admin } },
-  @{ id="winget"; title="Check winget availability"; run={
-      if (-not (Has-Cmd "winget")) {
-        throw "winget not found. Install 'App Installer' from Microsoft Store or use a Windows image with winget."
-      }
-    }
-  },
-  @{ id="git"; title="Install Git if missing"; run={
-      if (Has-Cmd "git") { Write-Log "Git present" "INFO"; return }
-      Run "Installing Git via winget..." { winget install --id Git.Git -e --accept-package-agreements --accept-source-agreements }
-    }
-  },
-  @{ id="python"; title="Install Python if missing"; run={
-      if (Has-Cmd "python") { Write-Log "Python present" "INFO"; return }
-      Run "Installing Python via winget..." { winget install --id Python.Python.3.11 -e --accept-package-agreements --accept-source-agreements }
-    }
-  },
-  @{ id="docker"; title="Install Docker Desktop if missing"; run={
-      if (Has-Cmd "docker") { Write-Log "Docker CLI present" "INFO"; return }
-      Run "Installing Docker Desktop via winget..." { winget install --id Docker.DockerDesktop -e --accept-package-agreements --accept-source-agreements }
-      Write-Log "Docker Desktop installed. You may need to log out/in or reboot. Resume installer afterwards." "WARN"
-    }
-  },
-  @{ id="repo"; title="Clone or update repo"; run={
-      Ensure-Dirs
-      New-Item -ItemType Directory -Force -Path $InstallRoot | Out-Null
-      if (!(Test-Path $RepoDir)) {
-        Run "Cloning repo to $RepoDir..." { git clone $RepoUrl $RepoDir }
-      } else {
-        if ($UpgradeOnly -or $true) {
-          Run "Updating repo (git fetch + reset)..." {
-            Push-Location $RepoDir
-            git fetch --all --prune
-            # Prefer main, but allow detached / local workflow.
-            git checkout main 2>$null
-            git pull --ff-only
-            Pop-Location
-          }
-        }
-      }
-    }
-  },
-  @{ id="compose_up"; title="Start observability stack (docker compose)"; run={
-      if (-not (Has-Cmd "docker")) { throw "docker not found. Start Docker Desktop and resume." }
-      Push-Location $RepoDir
-      Run "docker compose up -d" { docker compose up -d }
-      Pop-Location
-    }
-  },
-  @{ id="smoke"; title="Run smoke checks (Grafana + service)"; run={
-      Push-Location $RepoDir
-
-      # Grafana health
-      Run "Checking Grafana health..." {
-        $ok = $false
-        for ($i=0; $i -lt 60; $i++) {
-          try {
-            $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 -Uri "http://localhost:3000/api/health"
-            if ($r.StatusCode -eq 200) { $ok = $true; break }
-          } catch {}
-          Start-Sleep -Seconds 1
-        }
-        if (-not $ok) { throw "Grafana health check failed at http://localhost:3000/api/health" }
-        Write-Log "Grafana health OK" "INFO"
-      }
-
-      # Service smoke (start temporarily)
-      Run "Starting service for smoke..." {
-        $env:OTEL_SDK_DISABLED = "true"
-        $p = Start-Process -PassThru -WindowStyle Hidden -FilePath "python" -ArgumentList @("-m","uvicorn","app.main:app","--host","127.0.0.1","--port","8000")
-        Start-Sleep -Seconds 1
-        $ok = $false
-        for ($i=0; $i -lt 30; $i++) {
-          try {
-            $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 -Uri "http://localhost:8000/health"
-            if ($r.StatusCode -eq 200) { $ok = $true; break }
-          } catch {}
-          Start-Sleep -Milliseconds 500
-        }
-        try {
-          if (-not $ok) { throw "Service health check failed at http://localhost:8000/health" }
-          Write-Log "Service health OK" "INFO"
-          # Trigger one analytics event
-          Invoke-RestMethod -TimeoutSec 5 -Method Post -Uri "http://localhost:8000/track" -ContentType "application/json" -Body '{"event":"win_smoke","user_id":"local","properties":{"source":"installer"}}' | Out-Null
-          Write-Log "Service /track OK" "INFO"
-        } finally {
-          if (!$p.HasExited) { Stop-Process -Id $p.Id -Force }
-        }
-      }
-
-      Pop-Location
-    }
-  }
-)
-
-function Run-Steps {
-  $state = Load-State
-  if ($Reset) {
-    Write-Log "Reset requested: deleting state/log." "WARN"
-    if (Test-Path $StatePath) { Remove-Item -Force $StatePath }
-    if (Test-Path $LogPath) { Remove-Item -Force $LogPath }
-    $state = Load-State
-  }
-
-  $startIdx = [int]$state.current_step
-  for ($i=$startIdx; $i -lt $Steps.Count; $i++) {
-    $step = $Steps[$i]
-    $state.current_step = $i
-    Save-State $state
-
-    Set-StepStatus $state $step.id "RUNNING"
-    try {
-      Write-Log ("STEP " + ($i+1) + "/" + $Steps.Count + ": " + $step.title) "INFO"
-      & $step.run
-      Set-StepStatus $state $step.id "DONE"
-    } catch {
-      $msg = $_.Exception.Message
-      Set-StepStatus $state $step.id "FAILED" $msg
-      Write-Log ("FAILED: " + $step.title + " :: " + $msg) "ERROR"
-      throw
-    } finally {
-      $state.current_step = $i + 1
-      Save-State $state
-      if ($script:UiProgressUpdate) { $script:UiProgressUpdate.Invoke($i+1, $Steps.Count) }
-      if ($script:UiStepUpdate) { $script:UiStepUpdate.Invoke($state) }
-    }
-  }
-
-  Write-Log "Install complete." "INFO"
+function Run-Controller {
+  $log = New-GadosLog -LogPath $LogPath -UiLogAppend $script:UiLogAppend
+  $desired = Get-GadosDesiredState -RepoUrl $RepoUrl -InstallRoot $InstallRoot -RepoDir $RepoDir -InstallScope $InstallScope -UpgradeOnly:$UpgradeOnly -NoDocker:$NoDocker
+  return Invoke-GadosInstallerController -Desired $desired -StatePath $StatePath -Log $log -ScriptPath $PSCommandPath -Reset:$Reset
 }
 
 # ----------------------------
@@ -276,15 +96,18 @@ function Start-UI {
 
   function Render-Steps($state) {
     $stepsPanel.Children.Clear()
-    foreach ($s in $Steps) {
+    # Steps are computed inside the controller; render a stable view based on state.
+    $stepKeys = @()
+    if ($state.steps) { $stepKeys = $state.steps.Keys }
+    foreach ($k in $stepKeys) {
       $status = "PENDING"
       $note = ""
-      if ($state.steps.ContainsKey($s.id)) {
-        $status = $state.steps[$s.id].status
-        $note = $state.steps[$s.id].note
-      }
+      $s = $state.steps[$k]
+      $status = $s.status
+      $note = $s.note
       $tb = New-Object System.Windows.Controls.TextBlock
-      $tb.Text = ("[" + $status + "] " + $s.title + ($(if ($note) { " — " + $note } else { "" })))
+      $title = $s.title
+      $tb.Text = ("[" + $status + "] " + $title + ($(if ($note) { " — " + $note } else { "" })))
       $tb.Margin = "0,0,0,6"
       $stepsPanel.Children.Add($tb) | Out-Null
     }
@@ -304,13 +127,8 @@ function Start-UI {
     $win.Dispatcher.Invoke([action]{ $progress.Value = $pct }) | Out-Null
   }
 
-  $script:UiStepUpdate = {
-    param($state)
-    $win.Dispatcher.Invoke([action]{ Render-Steps $state }) | Out-Null
-  }
-
   # Initial render
-  Render-Steps (Load-State)
+  Render-Steps (Read-GadosInstallerState -StatePath $StatePath)
   if (Test-Path $LogPath) {
     $logBox.Text = (Get-Content $LogPath -Encoding UTF8 -ErrorAction SilentlyContinue | Out-String)
     $logBox.ScrollToEnd()
@@ -318,16 +136,18 @@ function Start-UI {
 
   $btnExit.Add_Click({ $win.Close() })
   $btnReset.Add_Click({
-    $script:Reset = $true
     try {
-      Run-Steps
+      $script:Reset = $true
+      Run-Controller | Out-Null
+      Render-Steps (Read-GadosInstallerState -StatePath $StatePath)
     } catch {
       [System.Windows.MessageBox]::Show($_.Exception.Message, "Install failed")
     }
   })
   $btnStart.Add_Click({
     try {
-      Run-Steps
+      Run-Controller | Out-Null
+      Render-Steps (Read-GadosInstallerState -StatePath $StatePath)
       [System.Windows.MessageBox]::Show("Install completed successfully.", "GADOS Installer")
     } catch {
       [System.Windows.MessageBox]::Show($_.Exception.Message, "Install failed")
@@ -339,12 +159,16 @@ function Start-UI {
 
 try {
   if ($NoUI) {
-    Run-Steps
+    Run-Controller | Out-Null
   } else {
     Start-UI
   }
 } catch {
-  Write-Log $_.Exception.Message "ERROR"
+  # Best-effort log (module handles file creation).
+  try {
+    $log = New-GadosLog -LogPath $LogPath -UiLogAppend $null
+    Write-GadosLog -Log $log -Message $_.Exception.Message -Level "ERROR"
+  } catch {}
   throw
 }
 

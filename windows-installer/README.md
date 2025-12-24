@@ -3,7 +3,7 @@
 This folder contains a Windows-first install utility for GADOS that:
 
 - runs **step-by-step** with a **GUI** (progress + live logs)
-- supports **resume** after failure/reboot (persists state under ProgramData)
+- supports **resume** after failure/reboot (persists state under ProgramData / LocalAppData)
 - supports **fresh install** and **upgrade**
 - performs **post-install observability checks** (Grafana + service health + smoke)
 
@@ -24,15 +24,24 @@ Open **Windows PowerShell** as Administrator and run:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-.\windows-installer\install.ps1
+.\windows-installer\install.cmd
 ```
 
 ### Notes
 
-- This script targets **Windows PowerShell 5.1** for WPF UI compatibility.
+- Use `install.cmd` to avoid running the script under the wrong interpreter (common cause of `CmdletBinding/param` parse errors).
+- The UI targets **Windows PowerShell 5.1** for WPF compatibility.
 - If you want headless mode:
 
 ```powershell
 .\windows-installer\install.ps1 -NoUI
+```
+
+### No-Docker mode (recommended for constrained environments)
+
+If Docker Desktop is blocked/unreliable, you can still install and run smoke checks for the service:
+
+```powershell
+.\windows-installer\install.ps1 -NoUI -NoDocker
 ```
 
