@@ -42,6 +42,7 @@ def setup_logging(service_name: str) -> None:
 
     logging.getLogger(__name__).info("logging_configured", extra={"service_name": service_name})
 
+
 def _parse_otel_headers(raw: str | None) -> dict[str, str] | None:
     """
     Parse OTEL_EXPORTER_OTLP_HEADERS style strings:
@@ -105,4 +106,3 @@ def setup_observability(service_name: str, otlp_endpoint: str | None = None) -> 
 def instrument_fastapi(app) -> None:
     # Auto-instrument incoming requests with spans.
     FastAPIInstrumentor().instrument_app(app)
-

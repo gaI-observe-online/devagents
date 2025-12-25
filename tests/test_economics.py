@@ -107,4 +107,3 @@ def test_top_contributors_vendor_unknown():
     ]
     ranked = top_contributors(entries, by="vendor")
     assert ranked[0]["key"] == "unknown"
-

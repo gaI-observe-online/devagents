@@ -34,7 +34,9 @@ class LedgerEntry:
     notes: str | None = None
 
     entry_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: str = field(default_factory=lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+    timestamp: str = field(
+        default_factory=lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    )
 
     def cost_usd(self) -> float:
         return float(self.quantity) * float(self.unit_cost_usd)
@@ -100,7 +102,11 @@ def evaluate_threshold(*, spend_usd: float, budget_usd: float) -> Threshold | No
 
 def budget_status(*, spend_usd: float, budget_usd: float) -> dict[str, float]:
     if budget_usd <= 0:
-        return {"budget_usd": float(budget_usd), "spend_usd": float(spend_usd), "margin_usd": float("nan")}
+        return {
+            "budget_usd": float(budget_usd),
+            "spend_usd": float(spend_usd),
+            "margin_usd": float("nan"),
+        }
     return {
         "budget_usd": float(budget_usd),
         "spend_usd": float(spend_usd),
@@ -141,4 +147,3 @@ def build_budget_trigger_event(
             "by_vendor": top_contributors(entries, by="vendor"),
         },
     }
-
