@@ -14,7 +14,9 @@ def test_non_critical_queued_to_digest(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("GADOS_DIGEST_STORE_PATH", str(digest_path))
     monkeypatch.delenv("GADOS_WEBHOOK_URL", raising=False)
 
-    res = dispatch_notification(NotificationEvent(event_type="test.event", priority="high", summary="hi"))
+    res = dispatch_notification(
+        NotificationEvent(event_type="test.event", priority="high", summary="hi")
+    )
     assert res == "queued_digest"
     assert digest_path.exists()
     lines = digest_path.read_text(encoding="utf-8").strip().splitlines()
@@ -56,7 +58,9 @@ def test_flush_daily_digest_posts_and_truncates(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr("app.notifications._webhook_post", fake_post)
 
-    sent = flush_daily_digest(webhook_url="https://example.invalid/webhook", store_path=str(digest_path))
+    sent = flush_daily_digest(
+        webhook_url="https://example.invalid/webhook", store_path=str(digest_path)
+    )
     assert sent == 2
     assert calls[0]["payload"]["class"] == "daily_digest"
     assert calls[0]["payload"]["event_type"] == "gados.daily_digest"
@@ -93,9 +97,10 @@ def test_critical_can_be_forced_to_digest(monkeypatch, tmp_path: Path):
     assert digest_path.exists()
 
 
-@pytest.mark.parametrize("value,expected", [("true", True), ("1", True), ("yes", True), ("false", False), ("0", False)])
+@pytest.mark.parametrize(
+    "value,expected", [("true", True), ("1", True), ("yes", True), ("false", False), ("0", False)]
+)
 def test_env_bool_parsing(monkeypatch, value, expected):  # noqa: ANN001
     monkeypatch.setenv("GADOS_NOTIFICATIONS_ENABLED", value)
     res = dispatch_notification(NotificationEvent(event_type="test.event"))
     assert (res != "dropped") is expected
-

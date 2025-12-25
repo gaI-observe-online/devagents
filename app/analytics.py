@@ -40,4 +40,3 @@ def track_event(
         span.add_event("analytics.event", attributes=attrs)
 
     _log.info("analytics_event", extra=attrs)
-

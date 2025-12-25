@@ -32,6 +32,7 @@ async def request_id_middleware(request: Request, call_next):
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
+
 @app.get("/health")
 def health() -> dict[str, str]:
     # Alias to satisfy integration smoke checks expecting /health.
@@ -54,4 +55,3 @@ class TrackRequest(BaseModel):
 def track(body: TrackRequest) -> dict[str, bool]:
     track_event(body.event, user_id=body.user_id, properties=body.properties)
     return {"accepted": True}
-

@@ -154,4 +154,3 @@ def dispatch_notification(event: NotificationEvent) -> str:
         return "queued_digest"
 
     return "dropped"
-
