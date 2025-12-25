@@ -1,0 +1,30 @@
+{
+  "checks": {
+    "pytest_unit": {
+      "exit_code": 1
+    },
+    "ruff": {
+      "exit_code": 1
+    },
+    "sast_bandit": {
+      "exit_code": 1
+    },
+    "sbom_cyclonedx": {
+      "exit_code": 1
+    },
+    "sca_pip_audit": {
+      "exit_code": 1
+    },
+    "secrets_detect_secrets": {
+      "exit_code": 127
+    },
+    "validator": {
+      "exit_code": 1
+    }
+  },
+  "generated_at_utc": "2025-12-24T10:38:31+00:00",
+  "pr": "",
+  "ref": "",
+  "repo": "",
+  "sha": ""
+}
