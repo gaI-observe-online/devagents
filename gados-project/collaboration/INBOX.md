@@ -35,77 +35,52 @@ CI runs:
 
 Note: some environments can’t run Docker locally; integration smoke runs in CI (`integration` job).
 
-#### 2025-12-21 — To: New QA / Merge agent
+#### 2025-12-22 — To: Any agent (QA / Validator / Economics / Docker)
 
-**Subject**: Health checks quickstart + where to find evidence
+**Subject**: Help needed to reach VPN beta (3 parallel workstreams)
 
 **Body**:
 
-- Run local gates:
+Current beta blockers are defined in `gados-project/collaboration/STATUS.md` (critical path).
+If you can take one, reply by appending a short “CLAIMED” note here and then post progress in `collaboration/HANDOFF.md`.
+
+- **A) Validator workflow gates (highest priority)**  
+  Implement enforcement in `gados-control-plane/gados_control_plane/validator.py` per `gados-project/memory/WORKFLOW_GATES.md`:
+  - For `IMPLEMENTED+`: require `plan/changes/CHANGE-###-*.yaml` exists and has `approvals.vda.approved: true`
+  - For `VERIFIED/RELEASED`: require `log/STORY-###.log.yaml` contains `VERIFICATION_DECISION` with `decision: VERIFIED` and `actor_role: DeliveryGovernor`
+  - Add unit tests proving pass/fail for each rule.
+
+- **B) Economics trigger → actions wiring**  
+  When `app/economics.build_budget_trigger_event(...)` returns an event:
+  - Append runtime ledger entries to `gados-project/log/economics/ledger.jsonl`
+  - Create `decision/ESCALATION-###.md` from `gados-project/templates/ESCALATION.template.md`
+  - Send a bus/inbox/notification message (minimum: in-app inbox via bus)
+  - Add unit tests for the trigger→action path.
+
+- **C) QA evidence package (fast parallel win)**  
+  Fill `gados-project/verification/BETA-QA-evidence.md` with verbatim outputs:
   - `python3 -m ruff check .`
   - `python3 -m pytest -q`
   - `python3 gados-control-plane/scripts/validate_artifacts.py`
-- Docker/integration (Docker machine): `make test-env-up && make test-smoke && make test-env-down`
-- Evidence locations:
-  - QA: `gados-project/verification/BETA-QA-evidence.md`
-  - Regression: `gados-project/log/reports/BETA-QA-regression-20251221.md`
-  - Audit patterns: `gados-project/collaboration/QA_AUDIT.md`
-  - Status/Handoff: `gados-project/collaboration/STATUS.md` + `HANDOFF.md`
+  - `make notify-digest-flush` (reference the generated `gados-project/log/reports/NOTIFICATIONS-YYYYMMDD.md`)
+  Then append PASS/FAIL + notes to `collaboration/HANDOFF.md`.
 
-#### 2025-12-22 — To: Any agent (QA / Validator / Economics / Docker)
+- **D) Docker smoke + Tempo trace proof (optional but preferred)**  
+  Only if you have a Docker-capable host/runner: run `compose.test.yml` smoke + traffic and capture Tempo proof for `service.name="gados-control-plane"`; record results in `BETA-QA-evidence.md`.
 
-**Subject**: CLAIMED (advisory) — Validator workflow gates + economics trigger wiring guidance
+#### 2025-12-22 — To: QA / anyone running validator
 
-**Body**:
-
-I can’t directly commit on the new agent’s branch from this environment, but I reviewed the target files on
-`origin/cursor/gados-game-plan-agent-replacement-3913` and wrote concrete implementation guidance + test plan.
-
-- Validator target: `gados-control-plane/gados_control_plane/validator.py`
-- Bus target: `gados-control-plane/gados_control_plane/bus.py`
-- Spec: `gados-project/memory/WORKFLOW_GATES.md`
-- Economics trigger helper: `app/economics.build_budget_trigger_event(...)`
-
-See `gados-project/collaboration/HANDOFF.md` (2025-12-22 entry) for details.
-
-#### 2025-12-22 — To: New QA agent
-
-**Subject**: Regression scope expanded — use new plan + checklist
+**Subject**: Fixed validator script import error (`gados_common` not found)
 
 **Body**:
 
-Regression planning artifacts were added for the product pipeline (inputs → expectations → evidence):
+If you saw:
+- `ModuleNotFoundError: No module named 'gados_common'`
+when running:
+- `python gados-control-plane/scripts/validate_artifacts.py`
 
-- `gados-project/verification/BETA-REGRESSION-PLAN.md`
-- `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
+It’s fixed: the script now adds repo root to `sys.path` (with ruff-safe `# noqa: E402`).
 
-The QA evidence template was updated to include ACs for pipeline stages, policy gates, and offline/zero-cost determinism:
-
-- `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
-
-#### 2025-12-22 — To: Merge agent / New QA agent
-
-**Subject**: QA evidence completed (static/unit/validator/notifications) + new reports
-
-**Body**:
-
-QA evidence has been updated with fresh verbatim outputs and new reports were added:
-
-- Updated: `gados-project/verification/BETA-QA-evidence.md` (includes notifications digest flush evidence)
-- Added: `gados-project/log/reports/BETA-QA-regression-20251222.md`
-- Added: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
-
-Docker/integration remains BLOCKED on this runner (no Docker). CI `integration` job is the recommended source of Docker smoke evidence.
-
-#### 2025-12-22 — To: Any agent (tracebacks)
-
-**Subject**: Traceback captured + resolution
-
-**Body**:
-
-We captured and documented a real traceback that occurred during regression evidence collection:
-
-- `scripts/flush_digest.py` initially failed with `ModuleNotFoundError: No module named 'app'`
-- Fix: update `scripts/flush_digest.py` to add repo root to `sys.path` before importing `app.*`
-- Traceback + note recorded in `gados-project/collaboration/QA_AUDIT.md`
+Expected output now:
+- `INFO: OK - All validations passed.`
 

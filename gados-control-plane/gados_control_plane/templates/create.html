@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Create</h2>
+    <p class="muted">Create artifacts from templates (interactive, file-backed).</p>
+  </hgroup>
+
+  <div class="grid">
+    <article>
+      <header><strong>Create epic</strong></header>
+      <form method="post" action="/create/epic">
+        <label>
+          Epic ID
+          <input name="epic_id" placeholder="EPIC-001" required />
+        </label>
+        <label>
+          Title
+          <input name="title" placeholder="Foundations & Control Plane" required />
+        </label>
+        <label>
+          Owner (virtual agent)
+          <input name="owner" placeholder="StrategicBrain-Agent-1" />
+        </label>
+        <button type="submit">Create epic</button>
+      </form>
+      <p class="muted">Writes to <code>gados-project/strategy/</code>.</p>
+    </article>
+
+    <article>
+      <header><strong>Create story</strong></header>
+      <form method="post" action="/create/story">
+        <label>
+          Story ID
+          <input name="story_id" placeholder="STORY-001" required />
+        </label>
+        <label>
+          Title
+          <input name="title" placeholder="Add artifact validator" required />
+        </label>
+        <label>
+          Epic ID
+          <input name="epic_id" placeholder="EPIC-001" required />
+        </label>
+        <button type="submit">Create story</button>
+      </form>
+      <p class="muted">Writes to <code>gados-project/plan/stories/</code> and stubs <code>log/</code>.</p>
+    </article>
+
+    <article>
+      <header><strong>Create change plan</strong></header>
+      <form method="post" action="/create/change">
+        <label>
+          Change ID
+          <input name="change_id" placeholder="CHANGE-001-A" required />
+        </label>
+        <label>
+          Story ID
+          <input name="story_id" placeholder="STORY-001" required />
+        </label>
+        <label>
+          Epic ID
+          <input name="epic_id" placeholder="EPIC-001" required />
+        </label>
+        <label>
+          Title
+          <input name="title" placeholder="Validator checks + CI integration" required />
+        </label>
+        <button type="submit">Create change plan</button>
+      </form>
+      <p class="muted">Writes to <code>gados-project/plan/changes/</code>.</p>
+    </article>
+
+    <article>
+      <header><strong>Beta scenario: Daily Spend Guardrail</strong></header>
+      <form method="post" action="/agents/run/daily-spend-guardrail">
+        <label>
+          Budget (USD)
+          <input name="budget_usd" type="number" step="0.01" value="10.00" required />
+        </label>
+        <label>
+          Spend steps (comma-separated USD)
+          <input name="spend_steps" placeholder="4,4,3" />
+        </label>
+        <button type="submit">Run guardrail</button>
+      </form>
+      <p class="muted">
+        Writes to <code>gados-project/log/economics/ledger.jsonl</code>, creates an <code>decision/ESCALATION-###.md</code>,
+        and emits a bus + notification event.
+      </p>
+    </article>
+  </div>
+{% endblock %}
+

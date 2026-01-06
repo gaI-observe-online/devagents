@@ -1,52 +1,53 @@
-## Shared status board
+# STATUS (Shared)
 
-Last updated: 2025-12-22 (QA evidence completed)
+Last updated (UTC): 2025-12-22
 
-### Active PRs / branches
+## Workstreams
+- **Governance enforcement**: workflow gates now enforced in validator (IMPLEMENTED+ requires VDA-approved change plan; VERIFIED/RELEASED requires VERIFICATION_DECISION by DeliveryGovernor) + unit tests added
+- **Control plane UI**: dashboard/artifacts/create/reports/inbox/decisions live (FastAPI + templates)
+- **Agent bus + notifications**: bus live; notifications module + digest flush tooling integrated; webhook integration not yet wired into control-plane UI
+- **Economics loop**: guardrail scenario wired end-to-end (ledger JSONL + threshold trigger → escalation decision artifact + bus + notification) and tested
+- **Observability tightening**: awaiting handoff entry (branch/PR + verification evidence) in `collaboration/HANDOFF.md`
+- **QA / evidence**: beta evidence package filled at `gados-project/verification/BETA-QA-evidence.md` and handoff updated
 
-| Workstream | Owner | Branch / PR | Status | Next step | Blockers |
-|---|---|---|---|---|---|
-| Analytics + Observability starter kit | Agent | `cursor/system-status-retrieval-bd2b` / PR #2 | READY_TO_MERGE | Merge PR #2 after CI green | Docker integration is CI-only |
-| GADOS strategic plan | Agent | `cursor/gados-strategic-game-plan-58a6` / PR #1 | IN_PROGRESS | Review + reconcile docs | None |
-| New agent replacement (validator/economics wiring) | Agent | `cursor/gados-game-plan-agent-replacement-3913` | IN_PROGRESS | Implement workflow-gate enforcement + economics trigger wiring | See `HANDOFF.md` 2025-12-22 guidance |
+## Critical path (VPN beta)
+1. **Enforce workflow gates in code** (implement `WORKFLOW_GATES.md` in validator: parse story logs for `VERIFICATION_DECISION`, require VDA-approved change plan for `IMPLEMENTED+`, enforce VDA-only VERIFIED).
+2. **Wire economics triggers to actions** (append to `log/economics/ledger.jsonl` in runtime + on threshold breach create escalation artifact + send notification/bus message).
+3. **Complete QA evidence** (fill `verification/BETA-QA-evidence.md`; Docker/Tempo proof optional but preferred).
 
-### QA status (beta)
+## Definition of Done (critical path)
 
-- **Evidence artifact**: `gados-project/verification/BETA-QA-evidence.md`
-- **Template**: `gados-project/verification/BETA-QA-evidence-TEMPLATE.md`
-- **Regression plan**: `gados-project/verification/BETA-REGRESSION-PLAN.md`
-- **Evidence pack checklist**: `gados-project/verification/BETA-EVIDENCE-PACK-CHECKLIST.md`
-- **Beta scenarios (authoritative)**: `gados-project/verification/BETA-SCENARIOS.md`
-- **Expectation vs reality (swimlanes)**: `gados-project/verification/EXPECTATION-VS-REALITY.md`
-- **mStories (Beta → Beta+)**: `gados-project/strategy/MSTORIES-BETA-BETAPLUS.md`
-- **Regression log**: `gados-project/log/reports/BETA-QA-regression-20251221.md`
-- **Regression log (latest)**: `gados-project/log/reports/BETA-QA-regression-20251222.md`
-- **Notifications report (latest)**: `gados-project/log/reports/NOTIFICATIONS-20251222.md`
-- **QA audit evidence**: `gados-project/collaboration/QA_AUDIT.md` (PASS + controlled FAIL examples)
-- **Collab inbox**: `gados-project/collaboration/INBOX.md` (async messages for other agents)
-- **Integration code review notes**: `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry)
-- **Latest results**:
-  - **PASS**: `python3 -m ruff check .`, `python3 -m pytest -q`
-  - **PASS**: `python3 gados-control-plane/scripts/validate_artifacts.py` (`artifact_validation=PASS`)
-  - **PASS**: notifications digest flush (see `NOTIFICATIONS-20251222.md`)
-  - **PARTIAL (local alt)**: no-Docker smoke covers `/health` + `/track` and compose port sanity (see `tests/test_integration_nodocker_smoke.py`)
-  - **BLOCKED (local docker)**: Docker integration steps (Docker not installed in this environment)
-  - **MOVED (CI)**: Docker/integration smoke now runs in GitHub Actions `integration` job
+### 1) Workflow gates enforced (code)
+- **Validator behavior**:
+  - If a story is `VERIFIED`/`RELEASED`: validator **must** parse `log/STORY-###.log.yaml` and require a `VERIFICATION_DECISION` with `decision: VERIFIED` and `actor_role: DeliveryGovernor`.
+  - If a story is `IMPLEMENTED` or beyond: validator **must** require a `CHANGE-###-*.yaml` exists and has `approvals.vda.approved: true`.
+- **Tests**: unit tests prove validator fails/passes for each rule.
+- **CI**: unit job runs validator and fails on violations.
 
-### QA decision (beta)
+### 2) Economics triggers wired to actions
+- **Ledger**: a runtime job/app hook writes valid JSONL lines to `gados-project/log/economics/ledger.jsonl` (append-only).
+- **Trigger action**: when `build_budget_trigger_event(...)` returns a threshold event:
+  - Create `decision/ESCALATION-###.md` (or ADR if it’s a re-architecture trigger) **and**
+  - Send a bus/notification event (at least to in-app inbox; webhook optional).
+- **Tests**: unit tests for ledger append + trigger→action wiring.
 
-- **GO (from QA)**: Yes — based on passing static/unit/validator/notifications checks and the no-Docker smoke alternative, with Docker integration evidence sourced from CI.
-- **Remaining**: optional Docker/Tempo proof capture on a Docker-capable host (if required for audit pack completeness).
+### 3) QA evidence complete
+- `gados-project/verification/BETA-QA-evidence.md` filled with:
+  - verbatim outputs for ruff/pytest/validator
+  - digest flush evidence (`NOTIFICATIONS-YYYYMMDD.md`)
+  - Docker/Tempo proof if available (optional but preferred)
+- QA appends PASS/FAIL outcome to `collaboration/HANDOFF.md`.
 
-### Progress update (2025-12-22)
+## Blockers
+- Docker-based LGTM validation requires a machine with Docker. Mitigation: integration tests are now optional by default; CI runs docker smoke as a non-blocking job.
 
-- Added regression planning artifacts (pipeline stages + policy gates + evidence pack checklist).
-- Updated QA evidence template to include pipeline/policy/offline ACs and references.
-- Pending merge on this branch: new/updated files under `gados-project/verification/` and updated collab docs (see `HANDOFF.md` 2025-12-22 entry).
+## QA snapshot
+- **ruff**: PASS (`python3 -m ruff check .`)
+- **pytest**: PASS (`python3 -m pytest -q -m "not integration"`)
+- **governance validator**: PASS (`python3 gados-control-plane/scripts/validate_artifacts.py`)
+- **docker smoke (LGTM + control-plane)**: OPTIONAL (run via `make test-env-up && make test-smoke && make test-integration && make test-env-down` on Docker-capable host)
 
-### Known blockers / gaps
-
-- **Integration requires Docker-capable runner** for `make test-env-up/test-smoke/test-env-down` and Grafana/Tempo checks.
-- **Pending merge (critical path hardening)**: see `gados-project/collaboration/HANDOFF.md` (2025-12-21 entry); files: `.github/workflows/blank.yml`, `Makefile`, `app/main.py`
-- **Workflow name ambiguity**: there are two workflows named `CI` (`blank.yml` and `ci.yml`); use `--workflow blank.yml` or `--workflow ci.yml` when querying runs.
+## Beta scenarios (verification & validation)
+Run the 5 scenario suite and review evidence here:
+- `collaboration/BETA_SCENARIOS.md`
 

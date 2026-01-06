@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Artifacts</h2>
+    <p class="muted">Browsing: <code>{{ dir if dir else "/" }}</code></p>
+  </hgroup>
+
+  <article>
+    <header><strong>Contents</strong></header>
+    {% if dir %}
+      <p><a href="/artifacts">⬅ back to root</a></p>
+    {% endif %}
+    <ul>
+      {% for item in items %}
+        <li>
+          {% if item.kind == "directory" %}
+            <a href="/artifacts?dir={{ item.rel_path }}"><strong>{{ item.rel_path.split('/')[-1] }}/</strong></a>
+            <span class="muted">({{ item.rel_path }})</span>
+          {% else %}
+            <a href="/view?path={{ item.rel_path }}">{{ item.rel_path.split('/')[-1] }}</a>
+            <span class="muted">({{ item.rel_path }})</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </article>
+{% endblock %}
+

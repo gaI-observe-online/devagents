@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Decisions (Human Authority)</h2>
+    <p class="muted">Architecture and escalation decisions are versioned artifacts in <code>gados-project/decision/</code>.</p>
+  </hgroup>
+
+  <article>
+    <header><strong>Create ADR (architecture decision)</strong></header>
+    <form method="post" action="/create/adr">
+      <label>
+        ADR ID
+        <input name="adr_id" placeholder="ADR-001" required />
+      </label>
+      <label>
+        Title
+        <input name="title" placeholder="Adopt Redis for agent bus" required />
+      </label>
+      <label>
+        Human Authority (name)
+        <input name="human" placeholder="Muammar Lone" required />
+      </label>
+      <label>
+        Requested by (role/agent)
+        <input name="requested_by" placeholder="CoordinationAgent/CA-1" required />
+      </label>
+      <button type="submit">Create ADR</button>
+    </form>
+  </article>
+
+  <article>
+    <header><strong>Request Human review (bus message)</strong></header>
+    <form method="post" action="/bus/send">
+      <input type="hidden" name="from_role" value="CoordinationAgent" />
+      <input type="hidden" name="from_agent_id" value="CA-1" />
+      <input type="hidden" name="to_role" value="HumanAuthority" />
+      <input type="hidden" name="to_agent_id" value="HUMAN-1" />
+      <input type="hidden" name="type" value="ARCH_DECISION_REQUESTED" />
+      <input type="hidden" name="severity" value="WARN" />
+      <label>
+        Notes (include ADR/Story refs)
+        <textarea name="notes" rows="3" placeholder="Please review ADR-001 for STORY-012 re-architecture trigger."></textarea>
+      </label>
+      <button type="submit">Send to Human inbox</button>
+    </form>
+    <p class="muted">Then review via <code>/inbox?role=HumanAuthority&agent_id=HUMAN-1</code>.</p>
+  </article>
+
+  <article>
+    <header><strong>Existing decision artifacts</strong></header>
+    {% if items %}
+      <ul>
+        {% for it in items %}
+          <li><a href="/view?path={{ it }}">{{ it }}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No decision artifacts yet.</p>
+    {% endif %}
+  </article>
+{% endblock %}
+

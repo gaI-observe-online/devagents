@@ -1,0 +1,2 @@
+Finding_ID,Title,Severity,Mapping,Evidence,Impact,Recommendation,Human_Review_Required,Notes
+SEC-SECRET-001,Secrets detected by detect-secrets,Critical,OWASP:A02:2021;CWE-798;PCI:3;ASVS:V14;NIST:PW.4,/tmp/audit-graph-run/Tool_Outputs/secrets_detect_secrets.json,Compromise risk. Secrets must be removed and rotated immediately.,"Remove secrets, rotate credentials, and add/maintain a secrets scanning gate.",yes,

@@ -1,0 +1,5 @@
+Control,Evidence,Status
+Secrets scanning,Tool_Outputs/secrets_detect_secrets.json,PASS/FAIL (see findings)
+SAST,Tool_Outputs/sast_bandit.json,PASS/FAIL (see findings)
+SCA,Tool_Outputs/sca_pip_audit.json,PASS/FAIL (see findings)
+SBOM,Tool_Outputs/sbom_cyclonedx.json,GENERATED

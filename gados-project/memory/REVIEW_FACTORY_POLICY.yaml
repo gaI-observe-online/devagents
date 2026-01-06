@@ -1,0 +1,21 @@
+version: 1
+purpose: >
+  Merge-gating policy for the Code Review Factory beta workflow.
+
+gates:
+  # Block merge if any secrets are detected (no baseline yet).
+  secrets:
+    block_on_findings: true
+
+  # Block merge if any vulnerable dependencies are found.
+  sca:
+    block_on_vulnerabilities: true
+
+  # Bandit severities: LOW, MEDIUM, HIGH
+  sast:
+    block_on_severity_at_or_above: HIGH
+
+  # Governance drift is always a blocker.
+  governance:
+    block_on_failure: true
+

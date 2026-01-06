@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>View</h2>
+    <p class="muted"><code>{{ path }}</code></p>
+  </hgroup>
+
+  <article>
+    <header><strong>Content</strong></header>
+    <pre><code>{{ content | e }}</code></pre>
+  </article>
+
+  {% if path.startswith("log/") %}
+    <article>
+      <header><strong>Append log event (append-only)</strong></header>
+      <form method="post" action="/append/story-log">
+        <input type="hidden" name="story_id" value="{{ path.split('/')[-1].replace('.log.yaml','') }}" />
+        <label>
+          Actor role
+          <select name="actor_role" required>
+            <option value="CoordinationAgent">CoordinationAgent</option>
+            <option value="QAAgent">QAAgent</option>
+            <option value="PeerReviewer">PeerReviewer</option>
+            <option value="DeliveryGovernor">DeliveryGovernor</option>
+            <option value="HumanAuthority">HumanAuthority</option>
+            <option value="StrategicBrain">StrategicBrain</option>
+          </select>
+        </label>
+        <label>
+          Actor name
+          <input name="actor" placeholder="VirtualAgent-1" required />
+        </label>
+        <label>
+          Event type
+          <input name="event_type" placeholder="STATUS_CHANGED / EVIDENCE_ATTACHED / VERIFICATION_DECISION" required />
+        </label>
+        <label>
+          Notes
+          <textarea name="notes" rows="3" placeholder="Short rationale / refs"></textarea>
+        </label>
+        <button type="submit">Append event</button>
+      </form>
+    </article>
+  {% endif %}
+{% endblock %}
+
