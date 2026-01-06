@@ -4,28 +4,24 @@ import asyncio
 import json
 import os
 import secrets
-import uuid
-import time
 import threading
-from datetime import datetime, timezone
+import time
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
+import yaml
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from opentelemetry import metrics, trace
 from starlette.middleware.cors import CORSMiddleware
 
+from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
+
 from .agents_langgraph import run_daily_digest
-from .beta_spend_guardrail import run_daily_spend_guardrail
-from .beta_spend_guardrail import write_guardrail_beta_run
-from .beta_policy_drift import run_policy_drift_watchdog
-from .beta_policy_drift import write_policy_drift_beta_run
-from .beta_sla_sentinel import beat as record_beta_heartbeat
-from .beta_sla_sentinel import run_sla_breach_sentinel
-from .beta_sla_sentinel import write_sla_beta_run
-from .bus import ack_message, list_inbox, send_message
 from .artifacts import (
     append_text,
     list_artifacts,
@@ -33,12 +29,13 @@ from .artifacts import (
     read_text,
     write_text,
 )
+from .beta_policy_drift import run_policy_drift_watchdog, write_policy_drift_beta_run
+from .beta_sla_sentinel import beat as record_beta_heartbeat
+from .beta_sla_sentinel import run_sla_breach_sentinel, write_sla_beta_run
+from .beta_spend_guardrail import run_daily_spend_guardrail, write_guardrail_beta_run
+from .bus import ack_message, list_inbox, send_message
 from .paths import get_paths
 from .validator import format_text_report, validate
-
-from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
-from opentelemetry import metrics, trace
-
 
 app = FastAPI(title="GADOS Control Plane (CA GUI)", version="0.1.0")
 basic_auth = HTTPBasic(auto_error=False)
@@ -65,7 +62,7 @@ _debug_counter = _meter.create_counter(
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 def _auth_enabled() -> bool:
     return bool(os.getenv("GADOS_BASIC_AUTH_USER")) and bool(os.getenv("GADOS_BASIC_AUTH_PASSWORD"))
@@ -275,7 +272,10 @@ async def _autorun_reports_loop() -> None:
     enabled = os.getenv("GADOS_AUTORUN_REPORTS", "0").strip() == "1"
     if not enabled:
         return
-    interval_min = int(os.getenv("GADOS_AUTORUN_REPORTS_INTERVAL_MINUTES", "360"))
+    try:
+        interval_min = int(os.getenv("GADOS_AUTORUN_REPORTS_INTERVAL_MINUTES", "360"))
+    except Exception:
+        interval_min = 360
     interval_sec = max(60, interval_min * 60)
     while True:
         try:
@@ -489,7 +489,7 @@ def create_adr(
 ) -> RedirectResponse:
     paths = get_paths()
     tpl = read_text(paths, "templates/ADR.template.md")
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     content = (
         tpl.replace("ADR-###", adr_id)
         .replace("<Decision Title>", title)
@@ -515,16 +515,19 @@ def append_story_log(
 ) -> RedirectResponse:
     paths = get_paths()
     log_rel = f"log/{story_id}.log.yaml"
-    notes_safe = notes.replace('"', "'")
-    entry = (
-        "\n"
-        "  - at: \"" + _utc_now() + "\"\n"
-        "    actor_role: \"" + actor_role + "\"\n"
-        "    actor: \"" + actor + "\"\n"
-        "    type: \"" + event_type + "\"\n"
-        "    notes: \"" + notes_safe + "\"\n"
-        "    submitted_by: \"" + user.replace('"', "'") + "\"\n"
-    )
+    # Use yaml.safe_dump to properly escape all values and prevent YAML injection
+    entry_data = {
+        "at": _utc_now(),
+        "actor_role": actor_role,
+        "actor": actor,
+        "type": event_type,
+        "notes": notes,
+        "submitted_by": user,
+    }
+    # Format as a list item with proper indentation
+    entry_yaml = yaml.safe_dump([entry_data], default_flow_style=False, sort_keys=False)
+    # Indent the YAML to fit into the log structure
+    entry = "\n" + "\n".join("  " + line for line in entry_yaml.splitlines()) + "\n"
     append_text(paths, log_rel, entry)
     return RedirectResponse(url=f"/view?path={log_rel}", status_code=303)
 
