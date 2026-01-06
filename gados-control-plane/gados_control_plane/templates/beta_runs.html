@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Beta Runs (Decision-first)</h2>
+    <p class="muted">Read-only run list for PM review. No CLI required.</p>
+    <p class="muted">
+      Non-scope: this UI is <strong>not</strong> legal certification, compliance attestation, or production monitoring.
+    </p>
+  </hgroup>
+
+  <article>
+    <header><strong>Runs</strong></header>
+    {% if runs %}
+      <table>
+        <thead>
+          <tr>
+            <th>Run ID</th>
+            <th>Scenario</th>
+            <th>Decision</th>
+            <th>Timestamp (UTC)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in runs %}
+            <tr>
+              <td><a href="{{ r.detail_url }}"><code>{{ r.run_id }}</code></a></td>
+              <td>{{ r.scenario }}</td>
+              <td><span class="pill">{{ r.decision }}</span></td>
+              <td class="muted"><code>{{ r.generated_at_utc }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No beta runs yet. (Run Scenario 4: Code Review Factory to generate one.)</p>
+    {% endif %}
+  </article>
+{% endblock %}
+

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from typing import Any
@@ -5,11 +7,10 @@ from typing import Any
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, Field
 
-from app.analytics import track_event
-from app.observability import instrument_fastapi, request_id_ctx, setup_observability
+from gados_common.analytics import track_event
+from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
 
-# Default to the canonical name used in runbooks; may be overridden by OTEL_SERVICE_NAME.
-setup_observability(service_name="gados-control-plane")
+setup_observability(service_name="example-api")
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="Example API (Analytics + Observability)")
@@ -30,11 +31,6 @@ async def request_id_middleware(request: Request, call_next):
 
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
-    return {"status": "ok"}
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    # Alias to satisfy integration smoke checks expecting /health.
     return {"status": "ok"}
 
 

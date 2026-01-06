@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Validate</h2>
+    <p class="muted">Governance checks against the artifact graph.</p>
+  </hgroup>
+
+  <article>
+    <header><strong>Results</strong></header>
+    <ul>
+      {% for m in messages %}
+        <li>
+          <strong>{{ m.level }}</strong> <code>{{ m.code }}</code>
+          {% if m.artifact %}<span class="muted">[{{ m.artifact }}]</span>{% endif %}
+          — {{ m.message }}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="muted">Machine-readable text: <a href="/validate.txt"><code>/validate.txt</code></a></p>
+  </article>
+{% endblock %}
+

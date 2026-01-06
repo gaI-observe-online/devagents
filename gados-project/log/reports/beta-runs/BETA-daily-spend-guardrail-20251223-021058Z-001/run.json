@@ -1,0 +1,47 @@
+{
+  "checks": {
+    "bus_event_emitted": {
+      "exit_code": 0
+    },
+    "escalation_created": {
+      "exit_code": 0
+    },
+    "ledger_appended": {
+      "exit_code": 0
+    },
+    "notification_queued": {
+      "exit_code": 0
+    }
+  },
+  "confidence": "HIGH",
+  "correlation_id": "5ba1720d-c762-4fdb-a65d-1827fb691686",
+  "decision_summary": "Budget threshold warning detected. Release requires review before proceeding.",
+  "evidence_paths": [
+    "log/economics/ledger.jsonl",
+    "decision/ESCALATION-002.md",
+    "log/bus/bus-events.jsonl",
+    "log/reports/NOTIFICATIONS-20251222.md"
+  ],
+  "generated_at_utc": "2025-12-23T02:10:58+00:00",
+  "not_run": [],
+  "pm_blockers": [
+    {
+      "owner": "PM",
+      "pm_summary": "Spend warning requires approval; confirm budget and proceed with caution."
+    }
+  ],
+  "recommendation": "REVIEW",
+  "required_next_action": "Review spend drivers and confirm budget approval before release.",
+  "run_id": "BETA-daily-spend-guardrail-20251223-021058Z-001",
+  "scenario": "daily-spend-guardrail",
+  "schema": "gados.beta_run.v1",
+  "top_findings": [
+    {
+      "file": "decision/ESCALATION-002.md",
+      "line": "",
+      "severity": "WARN",
+      "title": "Threshold=WARN spend_usd=11.00 budget_usd=10.00",
+      "tool": "economics"
+    }
+  ]
+}

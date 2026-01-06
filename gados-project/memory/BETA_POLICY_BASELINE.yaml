@@ -1,0 +1,40 @@
+version: 1
+purpose: >
+  Approved baseline for beta runtime configuration. The Policy Drift Watchdog compares
+  current environment/config against this baseline and emits an auditable drift report.
+
+policies:
+  # Security rails (beta defaults)
+  GADOS_MAX_REQUEST_BYTES:
+    type: int
+    expected: 1048576
+    severity: HIGH
+
+  GADOS_RATE_LIMIT_RPS:
+    type: float
+    expected: 10
+    severity: MEDIUM
+
+  GADOS_RATE_LIMIT_BURST:
+    type: float
+    expected: 20
+    severity: MEDIUM
+
+  # CORS: explicit; empty means "no CORS headers emitted"
+  GADOS_CORS_ALLOW_ORIGINS:
+    type: str
+    expected: ""
+    severity: LOW
+
+  # OTel: keep disabled by default so local beta run works without Docker
+  OTEL_SDK_DISABLED:
+    type: str
+    expected_one_of: ["1", "true", "yes"]
+    severity: LOW
+
+  # Optional periodic digest/report loop
+  GADOS_AUTORUN_REPORTS:
+    type: str
+    expected_one_of: ["0", "false", "no", ""]
+    severity: LOW
+

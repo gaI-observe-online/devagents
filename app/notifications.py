@@ -1,157 +1,154 @@
+from __future__ import annotations
+
 import hashlib
 import hmac
 import json
 import os
-import time
-import urllib.error
-import urllib.request
-from dataclasses import asdict, dataclass, field
-from typing import Any
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Literal
+from urllib.request import Request, urlopen
+
+from gados_common.fileio import append_text_locked
+
+
+Severity = Literal["INFO", "WARN", "ERROR", "CRITICAL"]
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _runtime_dir() -> Path:
+    # Reuse the existing runtime convention
+    return Path(os.getenv("GADOS_RUNTIME_DIR", ".gados-runtime")).resolve()
+
+
+def _queue_path() -> Path:
+    return _runtime_dir() / "notifications.queue.jsonl"
+
+
+def _ensure_runtime_dir() -> None:
+    _runtime_dir().mkdir(parents=True, exist_ok=True)
+
+
+def _severity_rank(sev: Severity) -> int:
+    return {"INFO": 10, "WARN": 20, "ERROR": 30, "CRITICAL": 40}[sev]
+
+
+def _min_webhook_severity() -> Severity:
+    v = os.getenv("GADOS_WEBHOOK_MIN_SEVERITY", "CRITICAL").upper().strip()
+    return v if v in {"INFO", "WARN", "ERROR", "CRITICAL"} else "CRITICAL"  # type: ignore[return-value]
 
 
 @dataclass(frozen=True)
-class NotificationEvent:
-    """
-    A small, stable event envelope for outbound notifications.
-
-    This is intentionally not coupled to any UI. It is designed to be produced by
-    control-plane/validator/CI components and consumed by webhook receivers.
-    """
-
-    event_type: str
-    priority: str = "normal"  # low|normal|high|critical
-    summary: str = ""
+class Notification:
+    type: str
+    severity: Severity
+    payload: dict[str, Any]
+    story_id: str | None = None
+    epic_id: str | None = None
     correlation_id: str | None = None
-    subject_id: str | None = None
-    details: dict[str, Any] = field(default_factory=dict)
-    occurred_at: float = field(default_factory=lambda: time.time())
+    artifact_refs: list[str] | None = None
 
-
-def _bool_env(name: str, default: bool) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _hmac_signature(secret: str, body: bytes) -> str:
-    sig = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
-    return f"sha256={sig}"
-
-
-def _webhook_post(url: str, payload: dict[str, Any], secret: str | None = None) -> None:
-    body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    headers = {"Content-Type": "application/json"}
-    if secret:
-        headers["X-GADOS-Signature"] = _hmac_signature(secret, body)
-
-    req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
-            # Read response to release connection; ignore contents.
-            resp.read()
-    except urllib.error.HTTPError as e:  # pragma: no cover (depends on remote)
-        raise RuntimeError(f"webhook_http_error status={e.code}") from e
-    except urllib.error.URLError as e:  # pragma: no cover (depends on remote)
-        raise RuntimeError("webhook_url_error") from e
-
-
-def enqueue_digest_event(event: NotificationEvent, *, store_path: str) -> None:
-    """
-    Append a digest event into a JSONL queue.
-
-    Queue semantics are intentionally simple: append-only; a daily job can ship
-    and then truncate/rotate.
-    """
-    record = {
-        "schema": "gados.digest.queue.v1",
-        "event": asdict(event),
-    }
-    os.makedirs(os.path.dirname(store_path) or ".", exist_ok=True)
-    with open(store_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, separators=(",", ":"), sort_keys=True))
-        f.write("\n")
-
-
-def flush_daily_digest(*, webhook_url: str, store_path: str, secret: str | None = None) -> int:
-    """
-    Ship all queued digest events as one webhook payload and truncate the queue.
-
-    Returns the number of queued events shipped.
-    """
-    if not os.path.exists(store_path):
-        return 0
-
-    events: list[dict[str, Any]] = []
-    with open(store_path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                events.append(json.loads(line))
-            except json.JSONDecodeError:
-                # Skip malformed lines; production should quarantine and alert.
-                continue
-
-    if not events:
-        return 0
-
-    payload = {
-        "schema": "gados.notification.v1",
-        "class": "daily_digest",
-        "event_type": "gados.daily_digest",
-        "priority": "normal",
-        "summary": "GADOS daily digest",
-        "details": {"events": events},
-    }
-    _webhook_post(webhook_url, payload, secret=secret)
-
-    # Truncate after successful send.
-    with open(store_path, "w", encoding="utf-8"):
-        pass
-    return len(events)
-
-
-def dispatch_notification(event: NotificationEvent) -> str:
-    """
-    Reference behavior implementing `gados-project/memory/NOTIFICATION_POLICY.md`.
-
-    - Critical realtime: priority=critical -> send webhook immediately.
-    - Daily digest: everything else -> enqueue for daily digest.
-
-    Returns: "sent_realtime" | "queued_digest" | "dropped"
-    """
-    enabled = _bool_env("GADOS_NOTIFICATIONS_ENABLED", True)
-    if not enabled:
-        return "dropped"
-
-    webhook_url = os.getenv("GADOS_WEBHOOK_URL", "").strip()
-    secret = os.getenv("GADOS_WEBHOOK_SECRET")
-    digest_path = os.getenv("GADOS_DIGEST_STORE_PATH", "/tmp/gados_digest.jsonl")
-
-    critical_enabled = _bool_env("GADOS_CRITICAL_REALTIME_ENABLED", True)
-    digest_enabled = _bool_env("GADOS_DAILY_DIGEST_ENABLED", True)
-
-    if event.priority == "critical" and critical_enabled:
-        if not webhook_url:
-            return "dropped"
-        payload = {
+    def to_dict(self) -> dict[str, Any]:
+        return {
             "schema": "gados.notification.v1",
-            "class": "critical_realtime",
-            "event_type": event.event_type,
-            "priority": event.priority,
-            "correlation_id": event.correlation_id,
-            "subject_id": event.subject_id,
-            "summary": event.summary,
-            "details": event.details,
+            "at": _utc_now_iso(),
+            "type": self.type,
+            "severity": self.severity,
+            "correlation_id": self.correlation_id,
+            "story_id": self.story_id,
+            "epic_id": self.epic_id,
+            "artifact_refs": self.artifact_refs or [],
+            "payload": self.payload,
         }
-        _webhook_post(webhook_url, payload, secret=secret)
-        return "sent_realtime"
 
-    if digest_enabled:
-        enqueue_digest_event(event, store_path=digest_path)
-        return "queued_digest"
 
-    return "dropped"
+def dispatch_notification(n: Notification) -> dict[str, Any]:
+    """
+    Always queues the notification (for daily digest) and optionally dispatches realtime webhook.
+
+    Returns a dict describing what happened, suitable for tests and logging.
+    """
+    _ensure_runtime_dir()
+    doc = n.to_dict()
+
+    # Always queue (append-only)
+    append_text_locked(
+        _queue_path(),
+        json.dumps(doc, separators=(",", ":"), ensure_ascii=False, sort_keys=True) + "\n",
+    )
+
+    sent = False
+    webhook_url = os.getenv("GADOS_WEBHOOK_URL", "").strip()
+    if webhook_url and _severity_rank(n.severity) >= _severity_rank(_min_webhook_severity()):
+        body = json.dumps(doc).encode("utf-8")
+        req = Request(webhook_url, method="POST", data=body, headers={"Content-Type": "application/json"})
+
+        secret = os.getenv("GADOS_WEBHOOK_HMAC_SECRET", "").encode("utf-8")
+        if secret:
+            sig = hmac.new(secret, body, hashlib.sha256).hexdigest()
+            req.add_header("X-GADOS-Signature", f"sha256={sig}")
+
+        # Best-effort: don't raise to callers; they can check result["sent"].
+        try:
+            with urlopen(req, timeout=5) as resp:  # noqa: S310
+                sent = 200 <= int(getattr(resp, "status", 200)) < 300
+        except Exception:
+            sent = False
+
+    return {"queued": True, "sent": sent, "queued_path": str(_queue_path())}
+
+
+def flush_daily_digest(*, output_path: Path, truncate: bool = True) -> dict[str, Any]:
+    """
+    Convert queued JSONL notifications into a markdown digest artifact.
+
+    - output_path: where to write digest (e.g. gados-project/log/reports/NOTIFICATIONS-YYYYMMDD.md)
+    - truncate: if True, clears the queue after flush.
+    """
+    _ensure_runtime_dir()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not _queue_path().exists():
+        output_path.write_text("# Notifications Digest\n\n(no queued notifications)\n", encoding="utf-8")
+        return {"flushed": 0, "output_path": str(output_path), "truncated": False}
+
+    lines = _queue_path().read_text(encoding="utf-8").splitlines()
+    events: list[dict[str, Any]] = []
+    for ln in lines:
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            events.append(json.loads(ln))
+        except Exception:
+            # skip malformed lines
+            continue
+
+    md: list[str] = []
+    md.append("# Notifications Digest")
+    md.append("")
+    md.append(f"**Generated (UTC)**: {_utc_now_iso()}")
+    md.append("")
+    if not events:
+        md.append("(no queued notifications)")
+    else:
+        for e in events:
+            sev = e.get("severity", "INFO")
+            typ = e.get("type", "UNKNOWN")
+            story = e.get("story_id")
+            when = e.get("at")
+            md.append(f"- **{sev}** `{typ}`" + (f" `{story}`" if story else "") + (f" ({when})" if when else ""))
+    md.append("")
+    output_path.write_text("\n".join(md), encoding="utf-8")
+
+    truncated = False
+    if truncate:
+        _queue_path().write_text("", encoding="utf-8")
+        truncated = True
+
+    return {"flushed": len(events), "output_path": str(output_path), "truncated": truncated}
 

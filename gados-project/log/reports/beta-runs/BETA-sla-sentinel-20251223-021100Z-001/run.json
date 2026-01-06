@@ -1,0 +1,48 @@
+{
+  "checks": {
+    "bus_event_emitted": {
+      "exit_code": 0
+    },
+    "heartbeat_checked": {
+      "exit_code": 0
+    },
+    "incident_report_written": {
+      "exit_code": 0
+    },
+    "latency_checked": {
+      "exit_code": 0
+    },
+    "notification_queued": {
+      "exit_code": 0
+    }
+  },
+  "confidence": "HIGH",
+  "correlation_id": "90e42c11-29fc-486d-86a2-d6ee52b10286",
+  "decision_summary": "Agent health/SLA breach detected. Release blocked until incident is understood and resolved.",
+  "evidence_paths": [
+    "log/reports/SLA-BREACH-20251223-021100.md",
+    "log/bus/bus-events.jsonl"
+  ],
+  "generated_at_utc": "2025-12-23T02:11:00+00:00",
+  "not_run": [],
+  "pm_blockers": [
+    {
+      "owner": "Eng",
+      "pm_summary": "SLA breach indicates operational risk; release blocked until resolved."
+    }
+  ],
+  "recommendation": "NO-GO",
+  "required_next_action": "Review the incident report, restore heartbeats/latency, and re-run the sentinel.",
+  "run_id": "BETA-sla-sentinel-20251223-021100Z-001",
+  "scenario": "sla-sentinel",
+  "schema": "gados.beta_run.v1",
+  "top_findings": [
+    {
+      "file": "log/reports/SLA-BREACH-20251223-021100.md",
+      "line": "",
+      "severity": "CRITICAL",
+      "title": "breached=True heartbeat_age_seconds=None latency_ms=0.00025797635316848755",
+      "tool": "sla"
+    }
+  ]
+}

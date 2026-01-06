@@ -1,50 +1,47 @@
-# GADOS — Governance & Audit Delivery Operating System
+# GADOS Project
 
-GADOS is a lightweight governance system for agent-assisted software delivery. It turns human/agent **intent** into **audit-ready artifacts** and a **VERIFIED** decision backed by evidence (tests, QA outputs, peer review, validation decision authority).
+**GADOS** (Governed Agentic Delivery Operating System) is an artifact-governed delivery system where AI speed is preserved while **truth, auditability, separation of duties, and economic control** are enforced.
 
-This repository’s GADOS docs are intentionally split into:
+## Cardinal rule
+**If it's not in an artifact, it doesn't exist.** AI memory is ephemeral; artifacts are versioned, auditable, and authoritative.
 
-- **Memory (authoritative)**: rules/specs/runbooks that define “what is true” for audits and enforcement.
-- **Strategy (narrative)**: architecture explanations and diagrams that explain “how it works”.
+## What this repository contains
+This folder is the **system of record** for delivery governance:
 
-## Repo layout (GADOS docs)
+- **Authoritative memory**: `/gados-project/memory/` (vision, principles, guardrails)
+- **Strategic plans (epics)**: `/gados-project/strategy/`
+- **Plan artifacts**: `/gados-project/plan/` (epics, stories, approved change plans)
+- **Audit logs**: `/gados-project/log/` (append-only delivery trail)
+- **Decisions**: `/gados-project/decision/` (human authority escalations)
+- **Verification**: `/gados-project/verification/` (evidence + peer review packages)
+- **Collaboration hub**: `/gados-project/collaboration/` (shared status + handoffs + decisions)
 
-To keep merges and audits clean, the core GADOS docs are stored as **versioned artifacts**:
+## Lifecycle (intent → truth)
+Typical story states:
 
-- `gados-project/strategy/ARCHITECTURE.md` (Mermaid blocks inside)
-- `gados-project/strategy/RUNBOOKS.md` (local dev, test env, CI, observability)
-- `gados-project/memory/COMM_PROTOCOL.md`
-- `gados-project/memory/NOTIFICATION_POLICY.md`
-- `gados-project/memory/VERIFICATION_POLICY.md`
-- `gados-project/memory/ui-screenshots-checklist.md` (optional audit checklist)
+- `PLANNED`
+- `IN_PROGRESS`
+- `IMPLEMENTED`
+- `QA_EVIDENCE_READY`
+- `PEER_REVIEWED`
+- `VERIFIED` (**only Delivery Governor / VDA can advance to this**)
+- `RELEASED`
+- `ESCALATED`
 
-## Collaboration (shared place)
+## Roles (separation of powers)
+- **Human Authority**: vision, ethics, escalation approval, irreversible/economic decisions.
+- **Strategic Brain**: epic framing, architecture & economics recommendations (no code, no verification).
+- **Coordination Agent (CA)**: control plane, artifact routing, memory management, reporting (no strategy, no code, no verification).
+- **Delivery Governor (VDA)**: verification authority, acceptance criteria enforcement, certify truth (no code, no pricing).
+- **Execution Engine (Vibe)**: implement approved changes + tests within bounds (no scope changes, no self-verification).
 
-For ongoing status updates, handoffs, and decisions, use:
-
-- `gados-project/collaboration/STATUS.md`
-- `gados-project/collaboration/HANDOFF.md`
-- `gados-project/collaboration/DECISIONS.md`
-
-## Intent → VERIFIED lifecycle (one page)
-
-The lifecycle is enforced by the verification policy:
-
-- `gados-project/memory/VERIFICATION_POLICY.md` (authoritative)
-
-At a high level, lifecycle states are:
-
-- **INTENT**: a story/problem statement exists (human or agent)
-- **PLANNED**: explicit plan + acceptance criteria + evidence plan
-- **IN_PROGRESS**: artifacts being produced (code, reports, diffs, logs)
-- **REVIEWED**: peer review recorded, issues addressed
-- **VALIDATED**: validation checks run; evidence is attached; VDA decision recorded
-- **VERIFIED**: governance rules satisfied; final state set by permitted actor(s)
-
-## Authoritative memory files (audit references)
-
-- `gados-project/memory/VERIFICATION_POLICY.md`
-- `gados-project/memory/COMM_PROTOCOL.md`
-- `gados-project/memory/NOTIFICATION_POLICY.md`
-- `gados-project/memory/ui-screenshots-checklist.md`
+## Getting started
+1. Write/update foundational artifacts in `/gados-project/memory/`.
+2. Create an epic in `/gados-project/strategy/` and its metadata in `/gados-project/plan/epics/`.
+3. Create a story spec in `/gados-project/plan/stories/`.
+4. Create an approved change plan in `/gados-project/plan/changes/` (must be VDA-approved to execute).
+5. Append delivery events to `/gados-project/log/STORY-XXX.log.yaml`.
+6. Collect evidence and peer review in `/gados-project/verification/`.
+7. Record any escalations in `/gados-project/decision/`.
+8. Coordinate work in `/gados-project/collaboration/` (update STATUS, append HANDOFF/DECISIONS).
 

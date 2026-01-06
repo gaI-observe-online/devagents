@@ -1,16 +1,13 @@
 ## Summary
+- <what changed and why>
 
-- What does this change do and why?
+## QA / Evidence
+- **QA evidence artifact**: `gados-project/verification/<...>.md`
+- **Validator output**: paste `python gados-control-plane/scripts/validate_artifacts.py` output
+- **Tests**: paste `pytest -q` output (or link to CI)
 
-## Evidence / QA
-
-- [ ] `python3 -m ruff check .`
-- [ ] `python3 -m pytest -q`
-- [ ] QA evidence updated (if applicable): `gados-project/verification/BETA-QA-evidence.md`
-
-## Docs / Governance
-
-- [ ] Updated collaboration status: `gados-project/collaboration/STATUS.md`
-- [ ] Added/updated handoff entry if needed: `gados-project/collaboration/HANDOFF.md`
-- [ ] Added/updated decision entry if needed: `gados-project/collaboration/DECISIONS.md`
+## Collaboration updates (required)
+- **STATUS**: updated `gados-project/collaboration/STATUS.md`
+- **HANDOFF**: appended to `gados-project/collaboration/HANDOFF.md` (if handing off)
+- **DECISIONS**: appended to `gados-project/collaboration/DECISIONS.md` (if any decision made)
 
