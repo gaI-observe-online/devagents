@@ -5,10 +5,10 @@ import threading
 import time
 from pathlib import Path
 
+from app.notifications import flush_daily_digest
+from gados_common.fileio import append_text_locked
 from gados_control_plane.beta_run_store import _allocate_beta_run_dir
 from gados_control_plane.paths import ProjectPaths
-
-from app.notifications import flush_daily_digest
 
 
 def test_env_var_parsing_error_handling(monkeypatch, tmp_path: Path):
@@ -184,7 +184,6 @@ def test_flush_digest_race_condition_prevention(tmp_path: Path, monkeypatch):
         try:
             # Try to write to the file while flush is happening
             for i in range(5):
-                from gados_common.fileio import append_text_locked
                 event = json.dumps({"schema": "gados.digest.queue.v1", "event": {"event_type": f"concurrent{i}"}})
                 append_text_locked(digest_path, event + "\n")
                 time.sleep(0.001)
