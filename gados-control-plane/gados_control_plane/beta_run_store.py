@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -11,37 +11,55 @@ from .paths import ProjectPaths
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 def _stamp_compact() -> str:
     # 20251223-002359Z
-    return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
 
 
 def _allocate_beta_run_dir(paths: ProjectPaths, *, scenario: str) -> tuple[str, Path]:
     """
     Create: gados-project/log/reports/beta-runs/BETA-<scenario>-<stamp>-NNN/
+    
+    Implements retry logic to handle concurrent directory allocation (TOCTOU fix).
     """
     root = paths.gados_root / "log" / "reports" / "beta-runs"
     root.mkdir(parents=True, exist_ok=True)
 
-    base = f"BETA-{scenario}-{_stamp_compact()}"
-    n = 1
-    for p in root.iterdir():
-        if not p.is_dir():
-            continue
-        name = p.name
-        if not name.startswith(base + "-"):
-            continue
-        tail = name.split("-")[-1]
-        if tail.isdigit():
-            n = max(n, int(tail) + 1)
+    # Retry up to 10 times in case of concurrent directory creation
+    max_retries = 10
+    for retry in range(max_retries):
+        base = f"BETA-{scenario}-{_stamp_compact()}"
+        n = 1
+        for p in root.iterdir():
+            if not p.is_dir():
+                continue
+            name = p.name
+            if not name.startswith(base + "-"):
+                continue
+            tail = name.split("-")[-1]
+            if tail.isdigit():
+                n = max(n, int(tail) + 1)
 
-    run_id = f"{base}-{n:03d}"
-    run_dir = root / run_id
-    run_dir.mkdir(parents=True, exist_ok=False)
-    return run_id, run_dir
+        run_id = f"{base}-{n:03d}"
+        run_dir = root / run_id
+        try:
+            run_dir.mkdir(parents=True, exist_ok=False)
+            return run_id, run_dir
+        except FileExistsError:
+            # Another process created this directory concurrently; retry
+            if retry == max_retries - 1:
+                # Last retry failed, re-raise the exception
+                raise
+            # Short sleep to allow timestamp to change if needed
+            import time
+            time.sleep(0.01)
+            continue
+    
+    # This should never be reached due to the raise in the except block
+    raise RuntimeError("Failed to allocate beta run directory after retries")
 
 
 def _write_sha256sums(dir_path: Path) -> None:
