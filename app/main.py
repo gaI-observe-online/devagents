@@ -5,10 +5,20 @@ import uuid
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
-from gados_common.analytics import track_event
-from gados_common.observability import instrument_fastapi, request_id_ctx, setup_observability
+from app.analytics import track_event
+from app.beta_runs import (
+    BetaRun,
+    BetaRunCompleteRequest,
+    BetaRunStartRequest,
+    complete_run,
+    list_projects,
+    list_runs,
+    start_run,
+)
+from app.observability import instrument_fastapi, request_id_ctx, setup_observability
 
 setup_observability(service_name="example-api")
 
@@ -51,3 +61,31 @@ def track(body: TrackRequest) -> dict[str, bool]:
     track_event(body.event, user_id=body.user_id, properties=body.properties)
     return {"accepted": True}
 
+
+@app.post("/beta/runs")
+def beta_run_start(body: BetaRunStartRequest) -> BetaRun:
+    """
+    Create a Beta/Test run record for UI visibility.
+    """
+    return start_run(body)
+
+
+@app.post("/beta/runs/{run_id}/complete")
+def beta_run_complete(run_id: str, body: BetaRunCompleteRequest) -> BetaRun:
+    updated = complete_run(run_id, body)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="run_not_found")
+    return updated
+
+
+@app.get("/beta/runs")
+def beta_run_list(project_id: str | None = None, limit: int = 50) -> list[BetaRun]:
+    return list_runs(project_id=project_id, limit=limit)
+
+
+@app.get("/beta/projects")
+def beta_projects_list(limit: int = 50) -> list[dict[str, Any]]:
+    """
+    UI-friendly view: each project with its latest run snapshot.
+    """
+    return list_projects(limit=limit)
