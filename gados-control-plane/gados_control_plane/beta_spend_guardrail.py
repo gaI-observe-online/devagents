@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from opentelemetry import trace
@@ -11,13 +11,13 @@ from opentelemetry import trace
 from app.economics import LedgerEntry, append_ledger_entry, build_budget_trigger_event
 from app.notifications import Notification, dispatch_notification
 
-from .bus import send_message
 from .beta_run_store import BetaRunMeta, write_beta_run
+from .bus import send_message
 from .paths import ProjectPaths
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 @dataclass(frozen=True)
@@ -60,7 +60,7 @@ def _next_escalation_id(decision_dir: Path) -> str:
 
 
 def _render_escalation_md(*, template: str, esc_id: str, title: str, severity: str, body: str) -> str:
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
     out = template
     out = out.replace("ESCALATION-###", esc_id)
     out = out.replace("<Title>", title)
@@ -88,7 +88,7 @@ def run_daily_spend_guardrail(
     """
     tracer = trace.get_tracer("gados-control-plane")
     corr = correlation_id or str(uuid.uuid4())
-    scope = scope_id or datetime.now(timezone.utc).date().isoformat()
+    scope = scope_id or datetime.now(UTC).date().isoformat()
     steps = spend_steps_usd or [budget_usd * 0.4, budget_usd * 0.4, budget_usd * 0.3]
 
     ledger_path = paths.gados_root / "log" / "economics" / "ledger.jsonl"
@@ -237,11 +237,15 @@ def write_guardrail_beta_run(*, paths: ProjectPaths, result: GuardrailResult) ->
         "bus_event_emitted": {"exit_code": 0 if result.bus_message_id else 1},
         "notification_queued": {"exit_code": 0 if result.notification_queued_path else 1},
     }
+    # Dynamically find the most recent notification file for today's date
+    today_str = datetime.now(UTC).strftime("%Y%m%d")
+    notif_file = f"NOTIFICATIONS-{today_str}.md"
+    notif_path = paths.gados_root / "log" / "reports" / notif_file
     evidence = [
         result.ledger_rel_path,
         *( [result.escalation_rel_path] if result.escalation_rel_path else [] ),
         "log/bus/bus-events.jsonl",
-        "log/reports/NOTIFICATIONS-20251222.md" if (paths.gados_root / "log" / "reports" / "NOTIFICATIONS-20251222.md").exists() else "log/reports",
+        f"log/reports/{notif_file}" if notif_path.exists() else "log/reports",
     ]
     return write_beta_run(
         paths,

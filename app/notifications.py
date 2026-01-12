@@ -5,19 +5,18 @@ import hmac
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 from urllib.request import Request, urlopen
 
 from gados_common.fileio import append_text_locked
 
-
 Severity = Literal["INFO", "WARN", "ERROR", "CRITICAL"]
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.now(UTC).replace(microsecond=0).isoformat()
 
 
 def _runtime_dir() -> Path:
@@ -116,17 +115,37 @@ def flush_daily_digest(*, output_path: Path, truncate: bool = True) -> dict[str,
         output_path.write_text("# Notifications Digest\n\n(no queued notifications)\n", encoding="utf-8")
         return {"flushed": 0, "output_path": str(output_path), "truncated": False}
 
-    lines = _queue_path().read_text(encoding="utf-8").splitlines()
+    # Use file locking to prevent race condition between read and truncate
+    import fcntl
+    queue_file = _queue_path()
     events: list[dict[str, Any]] = []
-    for ln in lines:
-        ln = ln.strip()
-        if not ln:
-            continue
+    
+    # Open file with exclusive lock for read and potential truncate
+    with open(queue_file, "r+", encoding="utf-8") as f:
         try:
-            events.append(json.loads(ln))
+            fcntl.flock(f, fcntl.LOCK_EX)
         except Exception:
-            # skip malformed lines
-            continue
+            # Non-POSIX or locking failure: proceed without a lock (best-effort).
+            pass
+        
+        # Read lines while holding the lock
+        lines = f.read().splitlines()
+        for ln in lines:
+            ln = ln.strip()
+            if not ln:
+                continue
+            try:
+                events.append(json.loads(ln))
+            except Exception:
+                # skip malformed lines
+                continue
+        
+        # Truncate while still holding the lock
+        truncated = False
+        if truncate:
+            f.seek(0)
+            f.truncate()
+            truncated = True
 
     md: list[str] = []
     md.append("# Notifications Digest")
@@ -144,11 +163,6 @@ def flush_daily_digest(*, output_path: Path, truncate: bool = True) -> dict[str,
             md.append(f"- **{sev}** `{typ}`" + (f" `{story}`" if story else "") + (f" ({when})" if when else ""))
     md.append("")
     output_path.write_text("\n".join(md), encoding="utf-8")
-
-    truncated = False
-    if truncate:
-        _queue_path().write_text("", encoding="utf-8")
-        truncated = True
 
     return {"flushed": len(events), "output_path": str(output_path), "truncated": truncated}
 
