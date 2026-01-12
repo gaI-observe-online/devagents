@@ -37,7 +37,9 @@ class LedgerEntry:
     notes: str | None = None
 
     entry_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    timestamp: str = field(default_factory=lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+    timestamp: str = field(
+        default_factory=lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    )
 
     def cost_usd(self) -> float:
         return float(self.quantity) * float(self.unit_cost_usd)
@@ -158,25 +160,19 @@ def evaluate_threshold(*, spend_usd: float, budget_usd: float) -> Threshold | No
     return None
 
 
-def budget_status(*, spend_usd: float, budget_usd: float) -> dict[str, float | None]:
-    """
-    JSON-safe budget facts (never emits NaN/Infinity).
-    """
-    spend = float(spend_usd)
-    budget = float(budget_usd)
-    if not (math.isfinite(spend) and math.isfinite(budget)):
-        return {"budget_usd": None, "spend_usd": None, "margin_usd": None, "margin_pct": None}
-    if spend < 0:
-        spend = 0.0
-    if budget <= 0:
-        return {"budget_usd": budget, "spend_usd": spend, "margin_usd": None, "margin_pct": None}
-
-    margin = budget - spend
-    margin_pct = margin / budget
-    # Guard against any future numeric drift (should already be finite here).
-    if not (math.isfinite(margin) and math.isfinite(margin_pct)):
-        return {"budget_usd": budget, "spend_usd": spend, "margin_usd": None, "margin_pct": None}
-    return {"budget_usd": budget, "spend_usd": spend, "margin_usd": margin, "margin_pct": margin_pct}
+def budget_status(*, spend_usd: float, budget_usd: float) -> dict[str, float]:
+    if budget_usd <= 0:
+        return {
+            "budget_usd": float(budget_usd),
+            "spend_usd": float(spend_usd),
+            "margin_usd": float("nan"),
+        }
+    return {
+        "budget_usd": float(budget_usd),
+        "spend_usd": float(spend_usd),
+        "margin_usd": float(budget_usd) - float(spend_usd),
+        "margin_pct": (float(budget_usd) - float(spend_usd)) / float(budget_usd),
+    }
 
 
 def build_budget_trigger_event(
@@ -211,4 +207,3 @@ def build_budget_trigger_event(
             "by_vendor": top_contributors(entries, by="vendor"),
         },
     }
-

@@ -78,4 +78,3 @@ def test_docker_compose_has_expected_ports():
     assert "grafana/otel-lgtm" in text
     assert "3000:3000" in text
     assert "4318:4318" in text
-

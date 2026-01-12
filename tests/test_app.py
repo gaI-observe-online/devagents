@@ -16,7 +16,9 @@ def test_healthz():
 
 def test_track_event():
     client = TestClient(app)
-    res = client.post("/track", json={"event": "signup_completed", "user_id": "u_1", "properties": {"plan": "pro"}})
+    res = client.post(
+        "/track",
+        json={"event": "signup_completed", "user_id": "u_1", "properties": {"plan": "pro"}},
+    )
     assert res.status_code == 200
     assert res.json() == {"accepted": True}
-

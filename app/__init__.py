@@ -1,2 +1,1 @@
-"""Isolated app modules (notifications, integrations, etc.)."""
-
+__all__ = []
