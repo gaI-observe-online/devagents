@@ -1,0 +1,52 @@
+schema: gados.change.v1
+change_id: "CHANGE-###-A"
+story_id: "STORY-###"
+epic_id: "EPIC-###"
+title: "<Change Plan Title>"
+
+status: "DRAFT" # DRAFT | APPROVED | REVOKED | SUPERSEDED
+
+author:
+  role: "CoordinationAgent"
+  name: "<name>"
+
+approvals:
+  vda:
+    approved: false
+    approver: "<name>"
+    approved_at: null
+    notes: ""
+  human_authority:
+    required: false
+    approved: false
+    approver: "<name>"
+    approved_at: null
+    notes: ""
+
+scope:
+  description: "What work is authorized by this plan."
+  in_scope:
+    - "..."
+  out_of_scope:
+    - "..."
+
+file_allowlist:
+  - "path/to/file1"
+  - "path/to/file2"
+
+acceptance_criteria_ref:
+  story: "plan/stories/STORY-###.md"
+
+test_plan:
+  - "unit: ..."
+  - "integration: ..."
+  - "manual: ..."
+
+rollback_plan:
+  steps:
+    - "..."
+
+risk:
+  level: "LOW" # LOW | MEDIUM | HIGH
+  notes: "..."
+

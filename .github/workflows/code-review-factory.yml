@@ -1,0 +1,43 @@
+name: Code Review Factory (Audit Pack)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review_pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install deps (+ SAST/SCA tools)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e gados-control-plane
+          pip install pip-audit bandit detect-secrets
+
+      - name: Generate review pack
+        env:
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          REVIEW_PACK_DIR: review-pack
+        run: |
+          python scripts/generate_review_pack.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-pack-pr-${{ github.event.pull_request.number }}
+          path: review-pack/
+

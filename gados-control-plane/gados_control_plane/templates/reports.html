@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Reports</h2>
+    <p class="muted">LangGraph-generated governance and delivery reporting.</p>
+  </hgroup>
+
+  <article>
+    <header><strong>Generate</strong></header>
+    <form method="post" action="/agents/run/daily-digest">
+      <button type="submit">Run daily digest (virtual agents)</button>
+    </form>
+    <p class="muted">Writes a report artifact to <code>gados-project/log/reports/</code>.</p>
+  </article>
+
+  <article>
+    <header><strong>Available reports</strong></header>
+    {% if reports %}
+      <ul>
+        {% for r in reports %}
+          <li>
+            <a href="/view?path={{ r.rel }}">{{ r.name }}</a>
+            <span class="muted">({{ r.rel }})</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No reports yet.</p>
+    {% endif %}
+  </article>
+{% endblock %}
+

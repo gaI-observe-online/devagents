@@ -1,0 +1,58 @@
+{
+  "blocked_reasons": [
+    "Governance validator failed"
+  ],
+  "checks": {
+    "pytest_unit": {
+      "exit_code": 1
+    },
+    "ruff": {
+      "exit_code": 1
+    },
+    "sast_bandit": {
+      "exit_code": 1
+    },
+    "sbom_cyclonedx": {
+      "exit_code": 1
+    },
+    "sca_pip_audit": {
+      "exit_code": 1
+    },
+    "secrets_detect_secrets": {
+      "exit_code": 127
+    },
+    "validator": {
+      "exit_code": 1
+    }
+  },
+  "confidence": "MEDIUM",
+  "counts": {
+    "max_sast_severity": "LOW",
+    "sca_vulns": 0,
+    "secrets": 0
+  },
+  "decision_summary": "Release blocked by automated governance/security gates.",
+  "generated_at_utc": "2025-12-24T10:38:31+00:00",
+  "not_run": [
+    "secrets_detect_secrets"
+  ],
+  "override_artifact": "gados-project\\decision\\OVERRIDE-local-nosha.md",
+  "override_required": true,
+  "pm_blockers": [
+    {
+      "owner": "Eng",
+      "pm_summary": "Governance rules failed (required artifacts missing). Release blocked until corrected."
+    }
+  ],
+  "pr": "",
+  "recommendation": "NO-GO",
+  "ref": "",
+  "repo": "",
+  "required_next_action": "Fix blockers and re-run. If you must proceed, file a Human Authority override with justification.",
+  "run_id": "REVIEW-local-nosha-004",
+  "run_key": "local-nosha",
+  "scenario": "code-review-factory",
+  "schema": "gados.review_run.v1",
+  "sha": "",
+  "top_findings": []
+}

@@ -1,0 +1,7 @@
+id,severity,tool,component,file,line,title,cwe,owasp_top10,asvs,pci_dss,nist_ssdf,owner,status
+BANDIT:B110,LOW,bandit,app/control-plane,app/economics.py,93,"Try, Except, Pass detected.",CWE-703,A03:2021,V1,6,PW.4,,OPEN
+BANDIT:B310,MEDIUM,bandit,app/control-plane,app/notifications.py,97,Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.,CWE-22,A03:2021,V1,6,PW.4,,OPEN
+BANDIT:B112,LOW,bandit,app/control-plane,app/notifications.py,127,"Try, Except, Continue detected.",CWE-703,A03:2021,V1,6,PW.4,,OPEN
+BANDIT:B110,LOW,bandit,app/control-plane,gados-control-plane/gados_control_plane/main.py,243,"Try, Except, Pass detected.",CWE-703,A03:2021,V1,6,PW.4,,OPEN
+BANDIT:B110,LOW,bandit,app/control-plane,gados-control-plane/gados_control_plane/main.py,255,"Try, Except, Pass detected.",CWE-703,A03:2021,V1,6,PW.4,,OPEN
+BANDIT:B112,LOW,bandit,app/control-plane,gados-control-plane/gados_control_plane/validator.py,83,"Try, Except, Continue detected.",CWE-703,A03:2021,V1,6,PW.4,,OPEN

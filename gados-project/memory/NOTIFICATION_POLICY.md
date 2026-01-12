@@ -1,97 +1,47 @@
-## Notification policy (authoritative)
+# Notification Policy
 
-This policy defines when GADOS emits notifications, which channels to use, and rate limits to avoid alert fatigue.
+**Status**: Authoritative / Evolves slowly  
+**Purpose**: Define when and how the system notifies humans and agents, minimizing interrupts while preserving safety.
 
-### Implementation mapping (normative)
+## Runtime configuration (env vars)
+- **Realtime webhook URL (optional)**: `GADOS_WEBHOOK_URL`
+- **Realtime minimum severity**: `GADOS_WEBHOOK_MIN_SEVERITY` (default: `CRITICAL`)
+- **Signing secret (optional)**: `GADOS_WEBHOOK_HMAC_SECRET`
+  - If set, outbound payloads are signed with HMAC-SHA256 and include header: `X-GADOS-Signature: sha256=<hex>`
 
-This repo’s reference implementation uses:
+## Channels
+- **In-app inbox**: Control plane `/inbox` (default, free)
+- **Daily digest**: generated report artifacts in `/gados-project/log/reports/` (default, free)
+- **CI status**: GitHub Actions checks (default, free)
+- **Webhooks** (optional): e.g., Slack/Discord/Teams; configured out-of-band
 
-- **Critical realtime**: webhook delivery **only** for `priority=critical`
-- **Daily digest**: all non-critical events are queued and shipped as a single daily digest webhook
+## Severity and routing
+- **INFO**: inbox + digest only
+- **WARN**: inbox + digest; optional webhook
+- **ERROR**: inbox + digest; webhook recommended
+- **CRITICAL**: **immediate** webhook + inbox + digest; if webhook not configured, create escalation artifact
 
-### Notification classes
+## Batch vs realtime
+- **Batch by default**: avoid notification fatigue.
+- **Realtime only for CRITICAL** by default.
 
-- **Critical realtime**
-  - **Goal**: immediate human attention required to prevent loss of auditability or production risk.
-  - **Examples**:
-    - audit log append failures
-    - validator/CI tamper detection
-    - unauthorized attempt to set VERIFIED
-    - durable queue outage causing message loss risk
-  - **Channels** (preferred order):
-    - pager / on-call
-    - Slack/Teams “alerts” channel
-    - email fallback
+## Escalation fallback
+If a CRITICAL notification cannot be delivered (no webhook configured), the Coordination Agent must create:
+- `/gados-project/decision/ESCALATION-###.md`
+and record the escalation event in the relevant story log.
 
-- **High realtime**
-  - **Goal**: timely human attention, but not paging unless persistent.
-  - **Examples**:
-    - validation failures on main branch
-    - repeated nacks for schema/permissions
-    - evidence bundle missing past SLA
-  - **Channels**:
-    - Slack/Teams channel + assignment mention
-    - email if unacknowledged within SLA
+## Required artifacts
+- Daily digest reports: `/gados-project/log/reports/REPORT-*.md`
+- Bus audit log (message send/ack): `/gados-project/log/bus/bus-events.jsonl`
 
-- **Daily digest**
-  - **Goal**: operational visibility without interruption.
-  - **Examples**:
-    - number of intents created/planned/verified
-    - top failing checks
-    - longest-running in-progress items
-  - **Channels**:
-    - email digest
-    - dashboard link
-
-### Rate limits (recommended defaults)
-
-- **Critical realtime**: no limit, but deduplicate identical alerts within 2 minutes
-- **High realtime**: max 10 per hour per correlation_id
-- **Daily digest**: once per day per workspace/org
-
-### Escalation and acknowledgements
-
-- notifications should include:
-  - correlation_id / intent_id
-  - link to evidence bundle
-  - most recent audit log entries
-  - recommended action
-- human acknowledgement should be recorded as an audit event
-
----
-
-## Webhook integration configuration (reference implementation)
-
-### Environment variables
-
-- **`GADOS_NOTIFICATIONS_ENABLED`**: `true|false` (default: `true`)
-- **`GADOS_WEBHOOK_URL`**: webhook endpoint URL (required to deliver anything)
-- **`GADOS_WEBHOOK_SECRET`**: optional HMAC secret for signing webhook payloads
-- **`GADOS_DIGEST_STORE_PATH`**: JSONL queue path for digest events (default: `/tmp/gados_digest.jsonl`)
-- **`GADOS_DAILY_DIGEST_ENABLED`**: `true|false` (default: `true`)
-- **`GADOS_CRITICAL_REALTIME_ENABLED`**: `true|false` (default: `true`)
-
-### Webhook request format
-
-- Method: `POST`
-- Content-Type: `application/json`
-- Body: JSON payload with schema `gados.notification.v1`
-- Optional signature header:
-  - `X-GADOS-Signature: sha256=<hex>`
-  - computed as HMAC-SHA256 over the raw request body using `GADOS_WEBHOOK_SECRET`
-
-### Payload shape (minimal)
-
-```json
-{
-  "schema": "gados.notification.v1",
-  "class": "critical_realtime|daily_digest",
-  "event_type": "string",
-  "priority": "low|normal|high|critical",
-  "correlation_id": "string|null",
-  "subject_id": "string|null",
-  "summary": "string",
-  "details": {}
-}
-```
+## Webhook payload schema (v1)
+When webhooks are enabled, realtime dispatch uses:
+- `schema`: `gados.notification.v1`
+- `at`: ISO-8601 UTC timestamp
+- `severity`: `INFO|WARN|ERROR|CRITICAL`
+- `type`: string (e.g. `ARCH_DECISION_REQUESTED`, `ECONOMICS_THRESHOLD_BREACHED`)
+- `correlation_id` (optional): UUID
+- `story_id` / `epic_id` (optional)
+- `artifact_refs` (optional): list of artifact paths
+- `payload` (optional): JSON object
 
