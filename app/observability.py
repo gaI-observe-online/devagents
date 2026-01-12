@@ -1,18 +1,8 @@
-import logging
-import os
-from contextvars import ContextVar
+"""
+Compatibility wrapper for the original observability starter-kit layout.
 
-from opentelemetry import metrics, trace
-from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from pythonjsonlogger import json
+The canonical implementation lives in `gados_common.observability`.
+"""
 
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 

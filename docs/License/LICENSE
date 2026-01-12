@@ -1,0 +1,54 @@
+GADOS License
+Version 1.0 – Source Available with Commercial Use Restriction
+
+Copyright (c) 2025 Muammar Lone
+
+Permission is hereby granted, free of charge, to any person or organization
+obtaining a copy of this software and associated documentation files (the
+"Software"), to use, copy, modify, and distribute the Software, subject to
+the following conditions:
+
+1. PERMITTED USES
+The Software may be used for:
+- Personal projects
+- Academic research
+- Non-commercial experimentation
+- Internal evaluation and prototyping
+- Open research and learning purposes
+
+2. RESTRICTED USES (COMMERCIAL)
+Commercial use of the Software is NOT permitted without prior written approval.
+
+Commercial use includes, but is not limited to:
+- Offering the Software or derivative works as a paid product or service
+- Embedding the Software into commercial platforms or SaaS offerings
+- Using the Software in revenue-generating systems
+- Providing consulting or managed services based on the Software
+- Redistributing the Software as part of a commercial bundle
+
+3. COMMERCIAL LICENSING
+Organizations or individuals seeking commercial use must obtain explicit
+written approval and a commercial license or partnership agreement from
+the copyright holder.
+
+Requests for commercial use should follow the process described in
+COMMERCIAL_USE.md.
+
+4. ATTRIBUTION
+Any permitted use or distribution must retain this license, copyright
+notice, and attribution to the GADOS project and its author.
+
+5. NO TRADEMARK LICENSE
+This license does not grant permission to use the name "GADOS", related
+logos, or branding for promotional or commercial purposes without approval.
+
+6. DISCLAIMER OF WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+7. LIMITATION OF LIABILITY
+IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+END OF LICENSE

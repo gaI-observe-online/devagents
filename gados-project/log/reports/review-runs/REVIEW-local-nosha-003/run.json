@@ -1,0 +1,98 @@
+{
+  "blocked_reasons": [],
+  "checks": {
+    "pytest_unit": {
+      "exit_code": 0
+    },
+    "ruff": {
+      "exit_code": 0
+    },
+    "sast_bandit": {
+      "exit_code": 1
+    },
+    "sbom_cyclonedx": {
+      "exit_code": 0
+    },
+    "sca_pip_audit": {
+      "exit_code": 0
+    },
+    "secrets_detect_secrets": {
+      "exit_code": 0
+    },
+    "validator": {
+      "exit_code": 0
+    }
+  },
+  "confidence": "HIGH",
+  "counts": {
+    "max_sast_severity": "MEDIUM",
+    "sca_vulns": 0,
+    "secrets": 0
+  },
+  "decision_summary": "No release blockers detected by automated gates.",
+  "generated_at_utc": "2025-12-23T00:21:53+00:00",
+  "not_run": [],
+  "override_artifact": "gados-project/decision/OVERRIDE-local-nosha.md",
+  "override_required": false,
+  "pm_blockers": [],
+  "pr": "",
+  "recommendation": "GO",
+  "ref": "",
+  "repo": "",
+  "required_next_action": "Proceed with release or request Human review if risk tolerance requires it.",
+  "run_id": "REVIEW-local-nosha-003",
+  "run_key": "local-nosha",
+  "scenario": "code-review-factory",
+  "schema": "gados.review_run.v1",
+  "sha": "",
+  "top_findings": [
+    {
+      "asvs": "V1",
+      "component": "app/control-plane",
+      "cwe": "CWE-22",
+      "file": "app/notifications.py",
+      "id": "BANDIT:B310",
+      "line": 97,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A03:2021",
+      "owner": "",
+      "pci_dss": "6",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "title": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
+      "tool": "bandit"
+    },
+    {
+      "asvs": "V1",
+      "component": "app/control-plane",
+      "cwe": "CWE-703",
+      "file": "app/economics.py",
+      "id": "BANDIT:B110",
+      "line": 93,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A03:2021",
+      "owner": "",
+      "pci_dss": "6",
+      "severity": "LOW",
+      "status": "OPEN",
+      "title": "Try, Except, Pass detected.",
+      "tool": "bandit"
+    },
+    {
+      "asvs": "V1",
+      "component": "app/control-plane",
+      "cwe": "CWE-703",
+      "file": "app/notifications.py",
+      "id": "BANDIT:B112",
+      "line": 127,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A03:2021",
+      "owner": "",
+      "pci_dss": "6",
+      "severity": "LOW",
+      "status": "OPEN",
+      "title": "Try, Except, Continue detected.",
+      "tool": "bandit"
+    }
+  ]
+}

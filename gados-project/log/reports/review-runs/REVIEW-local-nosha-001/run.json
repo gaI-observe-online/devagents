@@ -1,0 +1,78 @@
+{
+  "blocked_reasons": [
+    "Secrets detected (490)"
+  ],
+  "counts": {
+    "max_sast_severity": "MEDIUM",
+    "sca_vulns": 0,
+    "secrets": 490
+  },
+  "generated_at_utc": "2025-12-23T00:17:43+00:00",
+  "override_artifact": "gados-project/decision/OVERRIDE-local-nosha.md",
+  "override_required": true,
+  "pm_blockers": [
+    {
+      "owner": "Security+Eng",
+      "pm_summary": "Hardcoded credential/secret detected. Release blocked until removed and credentials rotated."
+    }
+  ],
+  "pr": "",
+  "recommendation": "NO-GO",
+  "ref": "",
+  "repo": "",
+  "run_id": "REVIEW-local-nosha-001",
+  "run_key": "local-nosha",
+  "scenario": "code-review-factory",
+  "schema": "gados.review_run.v1",
+  "sha": "",
+  "top_findings": [
+    {
+      "asvs": "V14",
+      "component": "repo",
+      "cwe": "CWE-798",
+      "file": ".pytest_cache/CACHEDIR.TAG",
+      "id": "SECRET:Hex High Entropy String",
+      "line": 1,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A02:2021",
+      "owner": "",
+      "pci_dss": "3",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "title": "Potential secret detected",
+      "tool": "detect-secrets"
+    },
+    {
+      "asvs": "V14",
+      "component": "repo",
+      "cwe": "CWE-798",
+      "file": ".ruff_cache/CACHEDIR.TAG",
+      "id": "SECRET:Hex High Entropy String",
+      "line": 1,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A02:2021",
+      "owner": "",
+      "pci_dss": "3",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "title": "Potential secret detected",
+      "tool": "detect-secrets"
+    },
+    {
+      "asvs": "V14",
+      "component": "repo",
+      "cwe": "CWE-798",
+      "file": ".venv/lib/python3.12/site-packages/bandit-1.9.2.dist-info/entry_points.txt",
+      "id": "SECRET:Secret Keyword",
+      "line": 25,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A02:2021",
+      "owner": "",
+      "pci_dss": "3",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "title": "Potential secret detected",
+      "tool": "detect-secrets"
+    }
+  ]
+}

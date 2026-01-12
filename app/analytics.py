@@ -1,8 +1,8 @@
-import logging
-from collections.abc import Mapping
-from typing import Any
+"""
+Compatibility wrapper for the original analytics starter-kit layout.
 
-from opentelemetry import metrics, trace
+The canonical implementation lives in `gados_common.analytics`.
+"""
 
 _log = logging.getLogger(__name__)
 _meter = metrics.get_meter("analytics")

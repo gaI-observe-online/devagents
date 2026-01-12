@@ -1,0 +1,6 @@
+
+Traceback (most recent call last):
+  File "C:\devagents\gados-control-plane\scripts\validate_artifacts.py", line 12, in <module>
+    from gados_control_plane.paths import get_paths  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'gados_control_plane'

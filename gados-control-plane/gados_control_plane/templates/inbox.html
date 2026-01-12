@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Inbox</h2>
+    <p class="muted">Durable agent-to-agent messages (at-least-once) + append-only audit log.</p>
+  </hgroup>
+
+  <article>
+    <header><strong>View as</strong></header>
+    <form method="get" action="/inbox" class="grid">
+      <label>
+        Role
+        <input name="role" value="{{ role }}" />
+      </label>
+      <label>
+        Agent ID
+        <input name="agent_id" value="{{ agent_id }}" />
+      </label>
+      <div>
+        <label>&nbsp;</label>
+        <button type="submit">Switch</button>
+      </div>
+    </form>
+  </article>
+
+  <article>
+    <header><strong>Send message</strong></header>
+    <form method="post" action="/bus/send">
+      <div class="grid">
+        <label>From role <input name="from_role" value="CoordinationAgent" required /></label>
+        <label>From agent <input name="from_agent_id" value="CA-1" required /></label>
+      </div>
+      <div class="grid">
+        <label>To role <input name="to_role" value="{{ role }}" required /></label>
+        <label>To agent <input name="to_agent_id" value="{{ agent_id }}" required /></label>
+      </div>
+      <div class="grid">
+        <label>Type <input name="type" placeholder="EVIDENCE_READY / VERIFY_REQUESTED" required /></label>
+        <label>
+          Severity
+          <select name="severity">
+            <option value="INFO">INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid">
+        <label>Story ID (optional) <input name="story_id" placeholder="STORY-001" /></label>
+        <label>Epic ID (optional) <input name="epic_id" placeholder="EPIC-001" /></label>
+      </div>
+      <label>Notes <textarea name="notes" rows="3" placeholder="Short message"></textarea></label>
+      <button type="submit">Send</button>
+    </form>
+    <p class="muted">Audit log: <code>gados-project/log/bus/bus-events.jsonl</code></p>
+  </article>
+
+  <article>
+    <header><strong>Pending messages</strong></header>
+    {% if messages %}
+      <table role="grid">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>From</th>
+            <th>Type</th>
+            <th>Severity</th>
+            <th>Story</th>
+            <th>Payload</th>
+            <th>Ack</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for m in messages %}
+          <tr>
+            <td><code>{{ m.created_at }}</code></td>
+            <td><code>{{ m.from_role }}</code> / <code>{{ m.from_agent_id }}</code></td>
+            <td><code>{{ m.type }}</code></td>
+            <td><span class="pill">{{ m.severity }}</span></td>
+            <td>{% if m.story_id %}<code>{{ m.story_id }}</code>{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td><code>{{ m.payload }}</code></td>
+            <td>
+              <form method="post" action="/bus/ack">
+                <input type="hidden" name="message_id" value="{{ m.message_id }}" />
+                <input type="hidden" name="actor_role" value="{{ role }}" />
+                <input type="hidden" name="actor_id" value="{{ agent_id }}" />
+                <input type="hidden" name="redirect_role" value="{{ role }}" />
+                <input type="hidden" name="redirect_agent_id" value="{{ agent_id }}" />
+                <select name="status">
+                  <option value="ACKED">ACKED</option>
+                  <option value="NACKED">NACKED</option>
+                </select>
+                <input name="notes" placeholder="notes (optional)" />
+                <button type="submit">Submit</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No pending messages.</p>
+    {% endif %}
+  </article>
+{% endblock %}
+

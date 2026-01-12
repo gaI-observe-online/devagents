@@ -1,51 +1,45 @@
-## Communication protocol (authoritative)
+# Agent-to-Agent Communication Protocol
 
-This document defines the agent-to-agent and control-plane messaging protocol used by GADOS (envelope, delivery semantics, message types, and error handling).
+**Status**: Authoritative / Evolves slowly  
+**Purpose**: Define how virtual agents communicate with delivery guarantees and auditable logging.
 
-### Envelope (required for all messages)
+## Principles
+- **Durable delivery**: messages are stored until acknowledged.
+- **Idempotency**: senders provide `idempotency_key` to prevent duplicate effects.
+- **Traceability**: every message is logged to an append-only audit log with correlation IDs.
+- **Separation of duties**: protocol supports routing without allowing scope/verification bypass.
 
-- **`message_id`**: globally unique ID
-- **`type`**: message type (see catalog)
-- **`version`**: schema version (e.g. `1`)
-- **`timestamp`**: ISO-8601 UTC
-- **`producer`**: service/agent ID
-- **`consumer`**: intended recipient ID or group
-- **`correlation_id`**: ties together a story/run (e.g. intent ID)
-- **`trace_id`**: observability correlation (optional but recommended)
-- **`priority`**: `low | normal | high | critical`
-- **`ttl_seconds`**: time-to-live for delivery
-- **`body`**: type-specific payload
+## Message envelope (v1)
+All agent-to-agent messages MUST include:
 
-### Delivery semantics (agent bus)
+- `schema`: `gados.bus.message.v1`
+- `message_id`: UUID
+- `idempotency_key`: string (sender-chosen; stable for retries)
+- `created_at`: ISO-8601 UTC
+- `from`:
+  - `role`: e.g. `CoordinationAgent`, `QAAgent`, `PeerReviewer`, `DeliveryGovernor`, `StrategicBrain`
+  - `agent_id`: string (virtual agent instance id)
+- `to`:
+  - `role`: role name
+  - `agent_id`: string or `*` (broadcast within role)
+- `type`: message type (e.g. `REPORT_REQUESTED`, `EVIDENCE_READY`, `VERIFY_REQUESTED`, `ESCALATION_OPENED`)
+- `severity`: `INFO` | `WARN` | `ERROR` | `CRITICAL`
+- `correlation_id`: UUID (ties a conversation/workflow together)
+- `story_id` (optional): `STORY-###`
+- `epic_id` (optional): `EPIC-###`
+- `artifact_refs` (optional): list of artifact paths
+- `payload`: JSON object
 
-- **Durable queue**: messages are persisted before delivery.
-- **Inbox**: consumers pull/receive messages and process them idempotently.
-- **Ack**: consumer confirms successful processing.
-- **Nack**: consumer indicates failure, with retryability flag.
-- **Audit log**: send/ack/nack must be appended as immutable audit events.
+## Delivery semantics
+- **At-least-once delivery** until `ACK`.
+- **ACK states**:
+  - `ACKED` (processed successfully)
+  - `NACKED` (failed; will retry unless `dead_lettered=true`)
+- **Retry policy**: exponential backoff; after max retries, message is **dead-lettered**.
 
-### Message types catalog
+## Audit logging
+Each message send + each ACK/NACK MUST be appended to:
+- `/gados-project/log/bus/bus-events.jsonl`
 
-| Type | Producer | Consumer | Required fields (body) | Escalation rules |
-|---|---|---|---|---|
-| `intent.created` | Human / CA GUI | Control-plane | `intent_id`, `title`, `description`, `owner` | If no `plan.created` within SLA → notify |
-| `plan.created` | Control-plane / Planner agent | Artifact store / Inbox | `intent_id`, `plan_id`, `acceptance_criteria`, `evidence_plan` | If AC missing → nack |
-| `work.started` | Agent | Control-plane | `intent_id`, `work_id`, `branch_ref` | If stale heartbeat → notify |
-| `artifact.created` | Agent / CI | Artifact store | `artifact_id`, `kind`, `uri`, `content_hash` | If write fails → retry with backoff |
-| `review.requested` | Control-plane | Reviewer inbox | `intent_id`, `diff_ref`, `summary` | If unassigned beyond SLA → notify |
-| `review.recorded` | Reviewer | Control-plane | `intent_id`, `review_id`, `decision`, `notes`, `reviewer_id` | If `changes_requested` → route back to work |
-| `validation.requested` | Control-plane | CI / Validator | `intent_id`, `evidence_refs`, `checks` | If missing evidence → nack |
-| `validation.completed` | CI / Validator | Control-plane | `intent_id`, `result`, `check_runs`, `evidence_refs` | If failed → notify + block VERIFIED |
-| `vda.decision.recorded` | VDA | Control-plane | `intent_id`, `decision`, `rationale`, `evidence_refs`, `vda_id` | If deny → remediation cycle |
-| `status.changed` | Control-plane | Audit log / Inbox | `intent_id`, `from`, `to`, `actor_id`, `reason`, `evidence_refs` | Invalid transition → nack |
-| `bus.ack` | Consumer | Durable queue | `message_id`, `consumer`, `received_at` | Missing ack → redeliver |
-| `bus.nack` | Consumer | Durable queue / Audit log | `message_id`, `consumer`, `error_code`, `error_detail`, `retryable` | Retryable → redeliver; else escalate |
-| `audit.append` | Control-plane / Queue | Audit log | `event_type`, `subject_id`, `data` | Append failure → page |
-
-### Nack taxonomy (recommended)
-
-- **`schema_invalid`**: payload failed schema validation (non-retryable)
-- **`missing_prerequisite`**: prior state/evidence missing (retryable only if expected to appear)
-- **`permission_denied`**: actor not authorized (non-retryable; notify)
-- **`transient_failure`**: network/temporary backend issue (retryable)
+Each line is a JSON object (append-only). Corrections are appended as new events.
 

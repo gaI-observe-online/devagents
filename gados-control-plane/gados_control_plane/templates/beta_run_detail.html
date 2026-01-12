@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+  <hgroup>
+    <h2>Run Detail</h2>
+    <p class="muted"><code>{{ run_id }}</code></p>
+  </hgroup>
+
+  <article>
+    <header><strong>Decision</strong></header>
+    <p><span class="pill">{{ run.recommendation }}</span></p>
+    {% if run.confidence %}
+      <p class="muted">Confidence: <span class="pill">{{ run.confidence }}</span></p>
+    {% endif %}
+    {% if run.decision_summary %}
+      <p><strong>{{ run.decision_summary }}</strong></p>
+    {% endif %}
+    {% if run.pm_blockers and run.pm_blockers|length > 0 %}
+      <h4>Summary (PM language)</h4>
+      <ul>
+        {% for b in run.pm_blockers %}
+          <li><strong>{{ b.owner }}</strong>: {{ b.pm_summary }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No blockers detected by automated gates.</p>
+    {% endif %}
+
+    {% if run.required_next_action %}
+      <h4>Required next action</h4>
+      <p>{{ run.required_next_action }}</p>
+    {% endif %}
+
+    {% if override_required %}
+      {% if override_rel %}
+        <p class="muted">Override artifact: <code>{{ override_rel }}</code></p>
+        <form method="post" action="/beta/override">
+          <input type="hidden" name="run_key" value="{{ run_key }}" />
+          <label>
+            Approved by (name)
+            <input name="approved_by" placeholder="Jane Doe" required />
+          </label>
+          <label>
+            Role
+            <input name="role" value="HumanAuthority" required />
+          </label>
+          <label>
+            Reason (plain language)
+            <textarea name="reason" rows="3" placeholder="Why overriding is necessary; compensating controls; follow-up plan." required></textarea>
+          </label>
+          <button type="submit">Create override artifact</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>What ran (transparency)</strong></header>
+    {% if run.checks %}
+      <table>
+        <thead><tr><th>Check</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for k, v in run.checks.items() %}
+            {% set rc = v.exit_code %}
+            <tr>
+              <td><code>{{ k }}</code></td>
+              {% if rc == 0 %}
+                <td><span class="pill">PASS</span></td>
+              {% elif rc == 127 %}
+                <td><span class="pill">NOT RUN</span></td>
+              {% else %}
+                <td><span class="pill">FAIL</span> <span class="muted">(exit={{ rc }})</span></td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if run.not_run and run.not_run|length > 0 %}
+        <p class="muted">Missing evidence (NOT RUN): {{ run.not_run | join(", ") }}</p>
+      {% endif %}
+    {% else %}
+      <p class="muted">No check metadata recorded for this run.</p>
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Top 3 findings</strong></header>
+    {% if run.top_findings and run.top_findings|length > 0 %}
+      <ol>
+        {% for f in run.top_findings %}
+          <li>
+            <strong>{{ f.severity }}</strong> — {{ f.title }}
+            <span class="muted">({{ f.tool }}{% if f.file %} · {{ f.file }}{% endif %}{% if f.line %}:{{ f.line }}{% endif %})</span>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="muted">No findings recorded.</p>
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Evidence pack</strong></header>
+    {% if evidence_paths and evidence_paths|length > 0 %}
+      <ul>
+        {% for p in evidence_paths %}
+          <li><a href="/view?path={{ p }}">{{ p }}</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <ul>
+        <li><a href="/view?path={{ sums_rel }}">SHA256SUMS (immutability)</a></li>
+        <li><a href="/view?path={{ decision_rel }}">Decision artifact (human-readable)</a></li>
+      </ul>
+    {% endif %}
+  </article>
+
+  <article>
+    <header><strong>Run metadata</strong></header>
+    <pre><code>{{ run | tojson(indent=2) }}</code></pre>
+  </article>
+{% endblock %}
+

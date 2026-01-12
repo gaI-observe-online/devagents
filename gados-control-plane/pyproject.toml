@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gados-control-plane"
+version = "0.1.0"
+description = "GADOS Control Plane (CA GUI) + LangGraph virtual agents"
+requires-python = ">=3.11"
+dependencies = [
+  # Web + UI
+  "fastapi",
+  "uvicorn[standard]",
+  "jinja2",
+  "python-multipart",
+  "PyYAML",
+
+  # Virtual agents
+  "langgraph",
+  "langchain-core",
+
+  # Observability
+  "opentelemetry-api",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp-proto-http",
+  "opentelemetry-instrumentation-fastapi",
+  "opentelemetry-instrumentation-logging",
+  "python-json-logger",
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gados_control_plane*"]
+

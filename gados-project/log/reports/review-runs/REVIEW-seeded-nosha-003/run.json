@@ -1,0 +1,105 @@
+{
+  "blocked_reasons": [
+    "Secrets detected (1)"
+  ],
+  "checks": {
+    "pytest_unit": {
+      "exit_code": 0
+    },
+    "ruff": {
+      "exit_code": 0
+    },
+    "sast_bandit": {
+      "exit_code": 1
+    },
+    "sbom_cyclonedx": {
+      "exit_code": 0
+    },
+    "sca_pip_audit": {
+      "exit_code": 0
+    },
+    "secrets_detect_secrets": {
+      "exit_code": 0
+    },
+    "validator": {
+      "exit_code": 0
+    }
+  },
+  "confidence": "HIGH",
+  "counts": {
+    "max_sast_severity": "MEDIUM",
+    "sca_vulns": 0,
+    "secrets": 1
+  },
+  "decision_summary": "Release blocked by automated governance/security gates.",
+  "generated_at_utc": "2025-12-23T00:23:57+00:00",
+  "not_run": [],
+  "override_artifact": "gados-project/decision/OVERRIDE-seeded-nosha.md",
+  "override_required": true,
+  "pm_blockers": [
+    {
+      "owner": "Security+Eng",
+      "pm_summary": "Hardcoded credential/secret detected. Release blocked until removed and credentials rotated."
+    }
+  ],
+  "pr": "",
+  "recommendation": "NO-GO",
+  "ref": "",
+  "repo": "",
+  "required_next_action": "Fix blockers and re-run. If you must proceed, file a Human Authority override with justification.",
+  "run_id": "REVIEW-seeded-nosha-003",
+  "run_key": "seeded-nosha",
+  "scenario": "code-review-factory",
+  "schema": "gados.review_run.v1",
+  "sha": "",
+  "top_findings": [
+    {
+      "asvs": "V14",
+      "component": "repo",
+      "cwe": "CWE-798",
+      "file": "app/_seeded_secret_for_beta_proof.txt",
+      "id": "SECRET:Private Key",
+      "line": 1,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A02:2021",
+      "owner": "",
+      "pci_dss": "3",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "title": "Potential secret detected",
+      "tool": "detect-secrets"
+    },
+    {
+      "asvs": "V1",
+      "component": "app/control-plane",
+      "cwe": "CWE-22",
+      "file": "app/notifications.py",
+      "id": "BANDIT:B310",
+      "line": 97,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A03:2021",
+      "owner": "",
+      "pci_dss": "6",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "title": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
+      "tool": "bandit"
+    },
+    {
+      "asvs": "V1",
+      "component": "app/control-plane",
+      "cwe": "CWE-703",
+      "file": "app/economics.py",
+      "id": "BANDIT:B110",
+      "line": 93,
+      "nist_ssdf": "PW.4",
+      "owasp_top10": "A03:2021",
+      "owner": "",
+      "pci_dss": "6",
+      "severity": "LOW",
+      "status": "OPEN",
+      "title": "Try, Except, Pass detected.",
+      "tool": "bandit"
+    }
+  ]
+}

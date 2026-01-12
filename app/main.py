@@ -1,15 +1,26 @@
+from __future__ import annotations
+
 import logging
 import uuid
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from app.analytics import track_event
+from app.beta_runs import (
+    BetaRun,
+    BetaRunCompleteRequest,
+    BetaRunStartRequest,
+    complete_run,
+    list_projects,
+    list_runs,
+    start_run,
+)
 from app.observability import instrument_fastapi, request_id_ctx, setup_observability
 
-# Default to the canonical name used in runbooks; may be overridden by OTEL_SERVICE_NAME.
-setup_observability(service_name="gados-control-plane")
+setup_observability(service_name="example-api")
 
 log = logging.getLogger(__name__)
 app = FastAPI(title="Example API (Analytics + Observability)")

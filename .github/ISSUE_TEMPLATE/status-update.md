@@ -1,19 +1,20 @@
 ---
 name: Status update
-about: Lightweight status update for coordination
-title: "Status: <workstream> - <YYYY-MM-DD>"
+about: Lightweight status post for GADOS workstreams
+title: "Status: <short>"
 labels: ["status"]
+assignees: ""
 ---
 
+## Summary
+- <what changed>
+
 ## Workstream
+- <governance | control-plane | bus/notifications | economics | QA>
 
-## Current status
+## Blockers
+- <none>
 
-## What changed since last update
-
-## Next steps
-
-## Blockers / risks
-
-## Links
+## Evidence
+- Link to artifacts (e.g. `gados-project/collaboration/STATUS.md`, QA evidence, logs)
 
